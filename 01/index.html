@@ -1,792 +1,982 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>일본어 읽기 연습</title>
-<style>
-  :root{
-    --bg:#f6f8fb;
-    --text:#1f2937;
-    --muted:#6b7280;
-    --card:#ffffff;
-    --blue:#4facfe;
-    --cyan:#00f2fe;
-    --purple:#a18cd1;
-    --pink:#fbc2eb;
-    --green:#22c55e;
-    --red:#ef4444;
-    --orange:#fb923c;
-    --shadow:0 12px 28px rgba(15,23,42,.12);
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9키 리듬게임</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
 
-  *{ box-sizing:border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #252b4a, #090b14 70%);
+      color: white;
+      overflow: hidden;
+    }
 
-  body{
-    margin:0;
-    min-height:100vh;
-    text-align:center;
-    font-family:Arial, 'Malgun Gothic', sans-serif;
-    background:radial-gradient(circle at top, #ffffff 0%, var(--bg) 45%, #edf2f7 100%);
-    color:var(--text);
-  }
+    .wrap {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+    }
 
-  .page{
-    width:min(980px, calc(100% - 32px));
-    margin:0 auto;
-    padding:30px 0 44px;
-  }
+    .panel {
+      width: 280px;
+      height: 720px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
 
-  h1{
-    margin:0 0 8px;
-    font-size:34px;
-    letter-spacing:-.04em;
-  }
+    h1 {
+      margin: 0 0 18px;
+      font-size: 24px;
+    }
 
-  .sub{
-    margin:0 0 24px;
-    color:var(--muted);
-    font-size:15px;
-  }
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #d8dcff;
+    }
 
-  .panel{
-    background:rgba(255,255,255,.8);
-    border:1px solid rgba(255,255,255,.9);
-    border-radius:24px;
-    box-shadow:var(--shadow);
-    padding:24px;
-    backdrop-filter:blur(10px);
-  }
+    select,
+    input,
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+    }
 
-  .menu{
-    display:grid;
-    grid-template-columns:repeat(4, minmax(160px, 1fr));
-    gap:16px;
-    margin-top:18px;
-  }
+    select,
+    input {
+      background: #171b2f;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
 
-  .menu-card{
-    min-height:145px;
-    padding:24px 16px;
-    border-radius:22px;
-    cursor:pointer;
-    color:white;
-    font-size:18px;
-    font-weight:700;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    box-shadow:0 12px 22px rgba(15,23,42,.16);
-    transform:translateY(0);
-    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-    user-select:none;
-  }
+    button {
+      margin-top: 12px;
+      background: linear-gradient(135deg, #6d7cff, #9f55ff);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-  .menu-card:hover{
-    transform:translateY(-5px);
-    box-shadow:0 18px 30px rgba(15,23,42,.2);
-    filter:saturate(1.08);
-  }
+    button:hover {
+      filter: brightness(1.12);
+    }
 
-  .menu-card small{
-    font-size:13px;
-    font-weight:500;
-    opacity:.92;
-    line-height:1.35;
-  }
+    button.secondary {
+      background: #2a2f4d;
+    }
 
-  .single{ background:linear-gradient(135deg,#4facfe,#00f2fe); }
-  .comboBtn{ background:linear-gradient(135deg,#a18cd1,#fbc2eb); }
-  .singleQuiz{ background:linear-gradient(135deg,#22c55e,#86efac); }
-  .comboQuiz{ background:linear-gradient(135deg,#fb923c,#facc15); }
+    .stats {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      line-height: 1.8;
+      font-size: 15px;
+    }
 
-  #app{ display:none; }
+    .judge-counts {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #d6d8ef;
+      line-height: 1.7;
+    }
 
-  .topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-bottom:20px;
-    flex-wrap:wrap;
-  }
+    .game {
+      position: relative;
+      width: 720px;
+      height: 720px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 25px 90px rgba(0, 0, 0, 0.55);
+    }
 
-  #modeTitle{
-    margin:0;
-    font-size:25px;
-    letter-spacing:-.03em;
-  }
+    .lanes {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      z-index: 1;
+    }
 
-  .badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:#eef2ff;
-    color:#3730a3;
-    font-size:13px;
-    font-weight:700;
-  }
+    .lane {
+      border-right: 1px solid rgba(255, 255, 255, 0.11);
+      position: relative;
+    }
 
-  .row{
-    display:flex;
-    justify-content:center;
-    gap:48px;
-    margin:24px 0;
-    flex-wrap:wrap;
-  }
+    .lane:nth-child(1),
+    .lane:nth-child(2),
+    .lane:nth-child(3) {
+      background: rgba(80, 120, 255, 0.055);
+    }
 
-  .card{
-    padding:24px 26px;
-    border-radius:22px;
-    min-width:190px;
-    background:var(--card);
-    box-shadow:0 10px 22px rgba(15,23,42,.08);
-    border:1px solid #edf2f7;
-  }
+    .lane:nth-child(4),
+    .lane:nth-child(5),
+    .lane:nth-child(6) {
+      background: rgba(160, 90, 255, 0.065);
+    }
 
-  .hira{ background:linear-gradient(180deg,#f8fbff,#eef5ff); }
-  .kata{ background:linear-gradient(180deg,#fffaf5,#fff3e8); }
+    .lane:nth-child(7),
+    .lane:nth-child(8),
+    .lane:nth-child(9) {
+      background: rgba(80, 220, 255, 0.045);
+    }
 
-  .label{
-    font-size:14px;
-    color:var(--muted);
-    font-weight:700;
-    margin-bottom:10px;
-  }
+    .lane:nth-child(3),
+    .lane:nth-child(6) {
+      border-right: 4px solid rgba(255, 255, 255, 0.38);
+      box-shadow: 4px 0 16px rgba(255, 255, 255, 0.12);
+    }
 
-  .char{
-    font-size:66px;
-    line-height:1.05;
-    min-height:76px;
-  }
+    .lane:last-child {
+      border-right: none;
+    }
 
-  .pron{
-    font-size:23px;
-    color:#2563eb;
-    margin-top:12px;
-    min-height:30px;
-    font-weight:700;
-  }
+    .lane.active {
+      background: rgba(255, 255, 255, 0.20);
+    }
 
-  .comboCard,
-  .quizCard{
-    display:inline-block;
-    padding:34px 42px;
-    border-radius:24px;
-    background:linear-gradient(135deg,#ffffff,#f8fafc);
-    box-shadow:0 12px 28px rgba(15,23,42,.12);
-    margin:24px 0;
-    min-width:min(540px, 100%);
-    border:1px solid #eef2f7;
-  }
+    .group-labels {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.6;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      color: #dce2ff;
+      letter-spacing: 8px;
+    }
 
-  .comboText,
-  .quizText{
-    font-size:66px;
-    line-height:1.08;
-    word-break:keep-all;
-    min-height:82px;
-  }
+    .hit-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 92px;
+      height: 5px;
+      background: linear-gradient(to right, transparent, #ffffff, transparent);
+      box-shadow: 0 0 18px white;
+      z-index: 4;
+    }
 
-  .comboPron,
-  .quizAnswer{
-    font-size:24px;
-    color:#2563eb;
-    margin-top:15px;
-    min-height:34px;
-    font-weight:700;
-  }
+    .key-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      padding: 0 10px;
+      z-index: 5;
+    }
 
-  .quizInputWrap{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin:18px auto 10px;
-    max-width:520px;
-  }
+    .key-box {
+      height: 54px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 22px;
+      font-weight: bold;
+      color: #e7e9ff;
+    }
 
-  #quizInput{
-    width:100%;
-    padding:14px 16px;
-    border:2px solid #dbe3ef;
-    border-radius:16px;
-    font-size:20px;
-    text-align:center;
-    outline:none;
-    background:#fff;
-    transition:border-color .16s ease, box-shadow .16s ease;
-  }
+    .key-box.pressed {
+      background: #ffffff;
+      color: #171b2f;
+      transform: translateY(2px);
+    }
 
-  #quizInput:focus{
-    border-color:#60a5fa;
-    box-shadow:0 0 0 4px rgba(96,165,250,.18);
-  }
+    .note {
+      position: absolute;
+      width: calc(100% / 9 - 10px);
+      height: 24px;
+      margin-left: 5px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #55e1ff, #b56bff);
+      box-shadow: 0 0 14px rgba(122, 190, 255, 0.8);
+      z-index: 3;
+    }
 
-  #quizInput.correct{
-    border-color:var(--green);
-    background:#f0fdf4;
-  }
+    .judge {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 170px;
+      text-align: center;
+      font-size: 46px;
+      font-weight: 900;
+      text-shadow: 0 0 18px black;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: 0.12s;
+      z-index: 8;
+      pointer-events: none;
+    }
 
-  #quizInput.wrong{
-    border-color:var(--red);
-    background:#fef2f2;
-  }
+    .judge.show {
+      opacity: 1;
+      transform: scale(1);
+    }
 
-  .feedback{
-    min-height:30px;
-    font-size:17px;
-    font-weight:800;
-  }
+    .combo {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 34px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: bold;
+      z-index: 6;
+      text-shadow: 0 0 12px black;
+    }
 
-  .feedback.correct{ color:var(--green); }
-  .feedback.wrong{ color:var(--red); }
+    .ready {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.42);
+      z-index: 10;
+      padding: 30px;
+      line-height: 1.6;
+    }
 
-  .stats{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    flex-wrap:wrap;
-    margin:16px 0 0;
-  }
+    .help {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #c6cae8;
+      line-height: 1.55;
+    }
 
-  .stat{
-    background:#f8fafc;
-    border:1px solid #e5e7eb;
-    border-radius:999px;
-    padding:8px 13px;
-    font-size:14px;
-    color:#374151;
-    font-weight:700;
-  }
-
-  .progressWrap{
-    width:min(440px, 100%);
-    height:10px;
-    margin:12px auto 0;
-    border-radius:999px;
-    background:#e5e7eb;
-    overflow:hidden;
-  }
-
-  #progressBar{
-    width:0%;
-    height:100%;
-    background:linear-gradient(90deg,#22c55e,#60a5fa);
-    transition:width .25s ease;
-  }
-
-  .controls{
-    margin-top:18px;
-    display:flex;
-    justify-content:center;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-
-  button{
-    margin:0;
-    padding:11px 16px;
-    border:0;
-    border-radius:14px;
-    background:#111827;
-    color:white;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
-    box-shadow:0 8px 16px rgba(17,24,39,.15);
-  }
-
-  button:hover{
-    transform:translateY(-2px);
-    box-shadow:0 12px 20px rgba(17,24,39,.2);
-  }
-
-  button.secondary{ background:#4b5563; }
-  button.answer{ background:#2563eb; }
-  button.next{ background:#059669; }
-
-  .homeArea{
-    margin-top:20px;
-    display:flex;
-    justify-content:center;
-  }
-
-  .homeBtn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-width:150px;
-    padding:11px 16px;
-    border-radius:14px;
-    background:#374151;
-    color:white;
-    font-size:15px;
-    font-weight:700;
-    text-decoration:none;
-    box-shadow:0 8px 16px rgba(17,24,39,.15);
-    transition:transform .15s ease, box-shadow .15s ease;
-  }
-
-  .homeBtn:hover{
-    transform:translateY(-2px);
-    box-shadow:0 12px 20px rgba(17,24,39,.2);
-  }
-
-  .toast{
-    position:fixed;
-    left:50%;
-    bottom:24px;
-    transform:translateX(-50%) translateY(20px);
-    background:#111827;
-    color:#fff;
-    padding:12px 16px;
-    border-radius:999px;
-    font-size:14px;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .2s ease, transform .2s ease;
-    box-shadow:0 10px 20px rgba(15,23,42,.2);
-    z-index:10;
-  }
-
-  .toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-  }
-
-  .pop{
-    animation:pop .22s ease;
-  }
-
-  @keyframes pop{
-    0%{ transform:scale(.96); opacity:.65; }
-    100%{ transform:scale(1); opacity:1; }
-  }
-
-  @media(max-width:820px){
-    .menu{ grid-template-columns:repeat(2, minmax(150px, 1fr)); }
-    .comboCard,.quizCard{ min-width:100%; padding:28px 22px; }
-    .comboText,.quizText,.char{ font-size:54px; }
-  }
-
-  @media(max-width:480px){
-    .page{ width:min(100% - 20px, 980px); padding-top:20px; }
-    .panel{ padding:18px 14px; border-radius:20px; }
-    .menu{ grid-template-columns:1fr; }
-    .menu-card{ min-height:112px; }
-    h1{ font-size:28px; }
-    .quizInputWrap{ flex-direction:column; }
-    button{ width:100%; }
-    .controls{ flex-direction:column; }
-  }
-</style>
+    .small {
+      font-size: 12px;
+      color: #aeb4d8;
+    }
+  </style>
 </head>
 <body>
-<div class="page">
-  <h1>일본어 읽기 연습</h1>
-  <p class="sub">숫자키로도 조작할 수 있습니다. 메뉴: 1~4 / 학습 중: 1 정답, 2 새 문제, 3 메뉴</p>
+  <div class="wrap">
+    <div class="panel">
+      <h1>9키 리듬게임</h1>
 
-  <div id="menuWrap" class="panel">
-    <h3>모드 선택</h3>
-    <div class="menu">
-      <div class="menu-card single" onclick="startSingle()">
-        ① 단일 문자
-        <small>히라가나와 가타카나 발음 확인</small>
-      </div>
-      <div class="menu-card comboBtn" onclick="startCombo()">
-        ② 조합 연습
-        <small>여러 글자를 이어 읽는 연습</small>
-      </div>
-      <div class="menu-card singleQuiz" onclick="startSingleQuiz()">
-        ③ 단일문자 퀴즈
-        <small>발음을 직접 입력해서 풀기</small>
-      </div>
-      <div class="menu-card comboQuiz" onclick="startComboQuiz()">
-        ④ 조합연습 퀴즈
-        <small>조합 발음을 직접 입력해서 풀기</small>
-      </div>
-    </div>
-  </div>
+      <label>곡 선택</label>
+      <select id="songSelect">
+        <option value="song1">Star Light - BPM 110</option>
+        <option value="song2">Night Drive - BPM 135</option>
+        <option value="song3">Hyper Beat - BPM 165</option>
+        <option value="custom">내 음악 파일 사용</option>
+      </select>
 
-  <div id="app" class="panel">
-    <div class="topbar">
-      <h2 id="modeTitle"></h2>
-      <span id="hintBadge" class="badge">Enter: 확인 / 다음</span>
-    </div>
+      <label>내 음악 파일</label>
+      <input id="audioFile" type="file" accept="audio/*" />
 
-    <div id="single" class="row" style="display:none;">
-      <div class="card hira">
-        <div class="label">히라가나</div>
-        <div id="hiraChar" class="char"></div>
-        <div id="hiraPron" class="pron"></div>
-      </div>
+      <label>커스텀 BPM</label>
+      <input id="customBpm" type="number" value="120" min="60" max="220" />
 
-      <div class="card kata">
-        <div class="label">가타카나</div>
-        <div id="kataChar" class="char"></div>
-        <div id="kataPron" class="pron"></div>
-      </div>
-    </div>
+      <label>난이도</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard</option>
+      </select>
 
-    <div id="comboWrap" style="display:none;">
-      <div class="comboCard">
-        <div id="comboText" class="comboText"></div>
-        <div id="comboPron" class="comboPron"></div>
-      </div>
-    </div>
-
-    <div id="quizWrap" style="display:none;">
-      <div class="quizCard">
-        <div class="label" id="quizLabel">문제</div>
-        <div id="quizText" class="quizText"></div>
-        <div class="quizInputWrap">
-          <input id="quizInput" type="text" autocomplete="off" placeholder="발음을 한글로 입력하세요. 예: 카, 시, 캬" />
-        </div>
-        <div id="quizFeedback" class="feedback"></div>
-        <div id="quizAnswer" class="quizAnswer"></div>
-      </div>
+      <button id="startBtn">게임 시작</button>
+      <button id="stopBtn" class="secondary">정지 / 초기화</button>
+      <button id="homeBtn" class="secondary">홈페이지로</button>
 
       <div class="stats">
-        <span class="stat">정답 <b id="correctCount">0</b></span>
-        <span class="stat">오답 <b id="wrongCount">0</b></span>
-        <span class="stat">정답률 <b id="accuracy">0%</b></span>
+        <div>점수: <b id="score">0</b></div>
+        <div>콤보: <b id="comboText">0</b></div>
+        <div>최고 콤보: <b id="maxCombo">0</b></div>
+        <div>정확도: <b id="accuracy">0%</b></div>
       </div>
-      <div class="progressWrap"><div id="progressBar"></div></div>
+
+      <div class="judge-counts">
+        <div>Great: <span id="greatCount">0</span></div>
+        <div>Good: <span id="goodCount">0</span></div>
+        <div>Nice: <span id="niceCount">0</span></div>
+        <div>Bad: <span id="badCount">0</span></div>
+        <div>Miss: <span id="missCount">0</span></div>
+      </div>
+
+      <div class="help">
+        조작 키: <b>7 8 9 / 4 5 6 / 1 2 3</b><br />
+        노트가 판정선에 닿을 때 해당 키를 누르세요.<br /><br />
+        <span class="small">
+          긴 노트 없음<br />
+          동시 노트는 최대 2개<br />
+          게임 시작 시 음악도 같이 재생
+        </span>
+      </div>
     </div>
 
-    <div class="controls">
-      <button class="answer" onclick="showAnswer()">정답 확인 (1)</button>
-      <button class="next" onclick="generate()">새 문제 (2)</button>
-      <button class="secondary" onclick="goMenu()">모드 선택 (3)</button>
+    <div class="game" id="game">
+      <div class="lanes" id="lanes"></div>
+
+      <div class="group-labels">
+        <div>789</div>
+        <div>456</div>
+        <div>123</div>
+      </div>
+
+      <div class="combo" id="comboView">COMBO 0</div>
+      <div class="judge" id="judgeView">GREAT</div>
+      <div class="hit-line"></div>
+      <div class="key-row" id="keyRow"></div>
+
+      <div class="ready" id="ready">
+        곡과 난이도를 선택한 뒤<br />
+        게임 시작을 누르세요.
+      </div>
     </div>
   </div>
 
-  <div class="homeArea">
-    <a class="homeBtn" href="../index.html">홈페이지로</a>
-  </div>
-</div>
+  <audio id="audio"></audio>
 
-<div id="toast" class="toast"></div>
+  <script>
+    const game = document.getElementById("game");
+    const lanesEl = document.getElementById("lanes");
+    const keyRow = document.getElementById("keyRow");
+    const judgeView = document.getElementById("judgeView");
+    const comboView = document.getElementById("comboView");
+    const ready = document.getElementById("ready");
 
-<script>
-// ===== 완전 문자 =====
-const hira = [
-"あ","い","う","え","お",
-"か","き","く","け","こ","が","ぎ","ぐ","げ","ご",
-"さ","し","す","せ","そ","ざ","じ","ず","ぜ","ぞ",
-"た","ち","つ","て","と","だ","ぢ","づ","で","ど",
-"な","に","ぬ","ね","の",
-"は","ひ","ふ","へ","ほ","ば","び","ぶ","べ","ぼ","ぱ","ぴ","ぷ","ぺ","ぽ",
-"ま","み","む","め","も",
-"や","ゆ","よ",
-"ら","り","る","れ","ろ",
-"わ","を","ん",
+    const songSelect = document.getElementById("songSelect");
+    const audioFile = document.getElementById("audioFile");
+    const customBpm = document.getElementById("customBpm");
+    const difficultySelect = document.getElementById("difficulty");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const homeBtn = document.getElementById("homeBtn");
+    const audio = document.getElementById("audio");
 
-// 요음
-"きゃ","きゅ","きょ","しゃ","しゅ","しょ","ちゃ","ちゅ","ちょ",
-"にゃ","にゅ","にょ","ひゃ","ひゅ","ひょ",
-"みゃ","みゅ","みょ","りゃ","りゅ","りょ",
-"ぎゃ","ぎゅ","ぎょ","じゃ","じゅ","じょ",
-"びゃ","びゅ","びょ","ぴゃ","ぴゅ","ぴょ"
-];
+    const scoreEl = document.getElementById("score");
+    const comboTextEl = document.getElementById("comboText");
+    const maxComboEl = document.getElementById("maxCombo");
+    const accuracyEl = document.getElementById("accuracy");
 
-// ===== 발음 생성기 =====
-function getPron(k){
-  const base = k.replace(/[\u30a1-\u30f6]/g,
-    c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+    const greatCountEl = document.getElementById("greatCount");
+    const goodCountEl = document.getElementById("goodCount");
+    const niceCountEl = document.getElementById("niceCount");
+    const badCountEl = document.getElementById("badCount");
+    const missCountEl = document.getElementById("missCount");
 
-  const table = {
-    "あ":"아","い":"이","う":"우","え":"에","お":"오",
-    "か":"카","き":"키","く":"쿠","け":"케","こ":"코",
-    "が":"가","ぎ":"기","ぐ":"구","げ":"게","ご":"고",
-    "さ":"사","し":"시","す":"스","せ":"세","そ":"소",
-    "ざ":"자","じ":"지","ず":"즈","ぜ":"제","ぞ":"조",
-    "た":"타","ち":"치","つ":"츠","て":"테","と":"토",
-    "だ":"다","ぢ":"지","づ":"즈","で":"데","ど":"도",
-    "な":"나","に":"니","ぬ":"누","ね":"네","の":"노",
-    "は":"하","ひ":"히","ふ":"후","へ":"헤","ほ":"호",
-    "ば":"바","び":"비","ぶ":"부","べ":"베","ぼ":"보",
-    "ぱ":"파","ぴ":"피","ぷ":"푸","ぺ":"페","ぽ":"포",
-    "ま":"마","み":"미","む":"무","め":"메","も":"모",
-    "や":"야","ゆ":"유","よ":"요",
-    "ら":"라","り":"리","る":"루","れ":"레","ろ":"로",
-    "わ":"와","を":"오","ん":"응",
+    const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
 
-    "きゃ":"캬","きゅ":"큐","きょ":"쿄",
-    "しゃ":"샤","しゅ":"슈","しょ":"쇼",
-    "ちゃ":"챠","ちゅ":"츄","ちょ":"초",
-    "にゃ":"냐","にゅ":"뉴","にょ":"뇨",
-    "ひゃ":"햐","ひゅ":"휴","ひょ":"효",
-    "みゃ":"먀","みゅ":"뮤","みょ":"묘",
-    "りゃ":"랴","りゅ":"류","りょ":"료",
-    "ぎゃ":"갸","ぎゅ":"규","ぎょ":"교",
-    "じゃ":"자","じゅ":"주","じょ":"조",
-    "びゃ":"뱌","びゅ":"뷰","びょ":"뵤",
-    "ぴゃ":"퍄","ぴゅ":"퓨","ぴょ":"표"
-  };
+    const keyToLane = {
+      "7": 0,
+      "8": 1,
+      "9": 2,
+      "4": 3,
+      "5": 4,
+      "6": 5,
+      "1": 6,
+      "2": 7,
+      "3": 8
+    };
 
-  return table[base] || "";
-}
+    const songs = {
+      song1: { name: "Star Light", bpm: 110, duration: 75 },
+      song2: { name: "Night Drive", bpm: 135, duration: 80 },
+      song3: { name: "Hyper Beat", bpm: 165, duration: 90 }
+    };
 
-// ===== 유틸 =====
-function toKata(h){
-  return h.replace(/[\u3041-\u3096]/g,
-    c=>String.fromCharCode(c.charCodeAt(0)+0x60));
-}
+    const difficultySettings = {
+      easy: {
+        density: 0.52,
+        maxChord: 1,
+        speed: 520,
+        missWindow: 0.20,
+        subdivision: 1
+      },
+      normal: {
+        density: 0.72,
+        maxChord: 2,
+        speed: 610,
+        missWindow: 0.20,
+        subdivision: 2
+      },
+      hard: {
+        density: 0.88,
+        maxChord: 2,
+        speed: 720,
+        missWindow: 0.20,
+        subdivision: 2
+      }
+    };
 
-function pick(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
-}
+    const judgement = {
+      great: { window: 0.045, score: 1000, weight: 1.00, label: "GREAT" },
+      good:  { window: 0.085, score: 700,  weight: 0.75, label: "GOOD" },
+      nice:  { window: 0.125, score: 450,  weight: 0.45, label: "NICE" },
+      bad:   { window: 0.180, score: 120,  weight: 0.15, label: "BAD" }
+    };
 
-function normalizeAnswer(v){
-  return String(v || "")
-    .replace(/\s+/g, "")
-    .replace(/[.,!?。！？]/g, "")
-    .trim();
-}
+    let notes = [];
+    let active = false;
+    let startTime = 0;
+    let animationId = null;
+    let audioCtx = null;
 
-function pop(el){
-  el.classList.remove("pop");
-  void el.offsetWidth;
-  el.classList.add("pop");
-}
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let hitWeight = 0;
+    let totalJudged = 0;
 
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>t.classList.remove("show"), 1300);
-}
+    let counts = {
+      great: 0,
+      good: 0,
+      nice: 0,
+      bad: 0,
+      miss: 0
+    };
 
-// ===== 상태 =====
-let mode="";
-let quizAnswered=false;
-let score={correct:0, wrong:0};
+    let pressedKeys = {};
 
-// ===== 모드 =====
-function startSingle(){
-  mode="single";
-  openApp("단일 문자 연습", "히라가나와 가타카나를 따로 읽습니다.");
-  single.style.display="flex";
-  comboWrap.style.display="none";
-  quizWrap.style.display="none";
-  generate();
-}
+    function buildLanes() {
+      lanesEl.innerHTML = "";
+      keyRow.innerHTML = "";
 
-function startCombo(){
-  mode="combo";
-  openApp("조합 연습", "여러 글자를 이어서 읽습니다.");
-  single.style.display="none";
-  comboWrap.style.display="block";
-  quizWrap.style.display="none";
-  generate();
-}
+      for (let i = 0; i < 9; i++) {
+        const lane = document.createElement("div");
+        lane.className = "lane";
+        lane.dataset.lane = i;
+        lanesEl.appendChild(lane);
 
-function startSingleQuiz(){
-  mode="singleQuiz";
-  resetScore();
-  openApp("단일문자 퀴즈", "문자의 발음을 직접 입력합니다.");
-  single.style.display="none";
-  comboWrap.style.display="none";
-  quizWrap.style.display="block";
-  generate();
-}
-
-function startComboQuiz(){
-  mode="comboQuiz";
-  resetScore();
-  openApp("조합연습 퀴즈", "조합된 글자의 발음을 직접 입력합니다.");
-  single.style.display="none";
-  comboWrap.style.display="none";
-  quizWrap.style.display="block";
-  generate();
-}
-
-function openApp(title, hint){
-  menuWrap.style.display="none";
-  app.style.display="block";
-  modeTitle.innerText=title;
-  hintBadge.innerText=hint;
-}
-
-function goMenu(){
-  mode="";
-  app.style.display="none";
-  menuWrap.style.display="block";
-  toast("모드 선택으로 이동");
-}
-
-// ===== 생성 =====
-function generate(){
-  if(mode==="single"){
-    let h = pick(hira);
-    let k;
-    do { k = toKata(pick(hira)); }
-    while(k===toKata(h));
-
-    hiraChar.innerText=h;
-    kataChar.innerText=k;
-    hiraPron.innerText="";
-    kataPron.innerText="";
-    pop(single);
-  }
-
-  if(mode==="combo"){
-    let len=Math.floor(Math.random()*3)+3;
-    let source=Math.random()<0.5 ? hira : hira.map(toKata);
-
-    let text="", pron="";
-    for(let i=0;i<len;i++){
-      let c=pick(source);
-      text+=c;
-      pron+=getPron(c);
+        const keyBox = document.createElement("div");
+        keyBox.className = "key-box";
+        keyBox.textContent = keys[i];
+        keyBox.dataset.key = keys[i];
+        keyRow.appendChild(keyBox);
+      }
     }
 
-    comboText.innerText=text;
-    comboPron.innerText="";
-    comboText.dataset.pron=pron;
-    pop(comboWrap);
-  }
+    function resetStats() {
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      hitWeight = 0;
+      totalJudged = 0;
 
-  if(mode==="singleQuiz"){
-    const useKata=Math.random()<0.5;
-    const h=pick(hira);
-    const q=useKata ? toKata(h) : h;
-    const type=useKata ? "가타카나" : "히라가나";
-    setQuizQuestion(q, getPron(q), type + " 단일문자 발음 입력");
-  }
+      counts = {
+        great: 0,
+        good: 0,
+        nice: 0,
+        bad: 0,
+        miss: 0
+      };
 
-  if(mode==="comboQuiz"){
-    let len=Math.floor(Math.random()*3)+3;
-    let source=Math.random()<0.5 ? hira : hira.map(toKata);
-    let text="", pron="";
-
-    for(let i=0;i<len;i++){
-      let c=pick(source);
-      text+=c;
-      pron+=getPron(c);
+      updateStats();
     }
 
-    const type = /[\u30a1-\u30f6]/.test(text) ? "가타카나" : "히라가나";
-    setQuizQuestion(text, pron, type + " 조합 발음 입력");
-  }
-}
+    function updateStats() {
+      scoreEl.textContent = score;
+      comboTextEl.textContent = combo;
+      maxComboEl.textContent = maxCombo;
+      comboView.textContent = `COMBO ${combo}`;
 
-function setQuizQuestion(text, pron, label){
-  quizAnswered=false;
-  quizLabel.innerText=label;
-  quizText.innerText=text;
-  quizText.dataset.pron=pron;
-  quizInput.value="";
-  quizInput.disabled=false;
-  quizInput.className="";
-  quizFeedback.innerText="";
-  quizFeedback.className="feedback";
-  quizAnswer.innerText="";
-  pop(quizWrap);
-  setTimeout(()=>quizInput.focus(), 30);
-}
+      greatCountEl.textContent = counts.great;
+      goodCountEl.textContent = counts.good;
+      niceCountEl.textContent = counts.nice;
+      badCountEl.textContent = counts.bad;
+      missCountEl.textContent = counts.miss;
 
-// ===== 정답 =====
-function showAnswer(){
-  if(mode==="single"){
-    hiraPron.innerText=getPron(hiraChar.innerText);
-    kataPron.innerText=getPron(kataChar.innerText);
-    toast("발음 표시");
-  }
+      const acc = totalJudged === 0
+        ? 0
+        : Math.round((hitWeight / totalJudged) * 1000) / 10;
 
-  if(mode==="combo"){
-    comboPron.innerText=comboText.dataset.pron;
-    toast("발음 표시");
-  }
+      accuracyEl.textContent = `${acc}%`;
+    }
 
-  if(mode==="singleQuiz" || mode==="comboQuiz"){
-    checkQuiz(true);
-  }
-}
+    function getSongInfo() {
+      const selected = songSelect.value;
 
-function checkQuiz(forceShow){
-  if(!(mode==="singleQuiz" || mode==="comboQuiz")) return;
-  if(quizAnswered) return;
+      if (selected === "custom") {
+        return {
+          name: "Custom",
+          bpm: Number(customBpm.value) || 120,
+          duration: 90,
+          custom: true
+        };
+      }
 
-  const user=normalizeAnswer(quizInput.value);
-  const answer=normalizeAnswer(quizText.dataset.pron);
+      return {
+        ...songs[selected],
+        custom: false
+      };
+    }
 
-  if(!user && !forceShow){
-    toast("발음을 입력하세요");
-    quizInput.focus();
-    return;
-  }
+    function pickRandomItems(array, count) {
+      const copied = [...array];
+      const picked = [];
 
-  quizAnswered=true;
-  quizInput.disabled=true;
+      while (picked.length < count && copied.length > 0) {
+        const index = Math.floor(Math.random() * copied.length);
+        picked.push(copied.splice(index, 1)[0]);
+      }
 
-  if(user===answer){
-    score.correct++;
-    quizInput.classList.add("correct");
-    quizFeedback.innerText="정답";
-    quizFeedback.classList.add("correct");
-    quizAnswer.innerText=answer;
-    toast("정답입니다");
-  }else{
-    score.wrong++;
-    quizInput.classList.add("wrong");
-    quizFeedback.innerText=user ? "오답" : "정답 공개";
-    quizFeedback.classList.add("wrong");
-    quizAnswer.innerText="정답: " + answer;
-    toast("정답을 확인하세요");
-  }
+      return picked;
+    }
 
-  updateScore();
-}
+    function generateNotes(song, difficulty) {
+      const setting = difficultySettings[difficulty];
+      const beat = 60 / song.bpm;
+      const step = beat / setting.subdivision;
 
-function resetScore(){
-  score={correct:0, wrong:0};
-  updateScore();
-}
+      const result = [];
+      let currentTime = 2.0;
+      let beatIndex = 0;
 
-function updateScore(){
-  const total=score.correct+score.wrong;
-  const rate=total ? Math.round(score.correct/total*100) : 0;
-  correctCount.innerText=score.correct;
-  wrongCount.innerText=score.wrong;
-  accuracy.innerText=rate + "%";
-  progressBar.style.width=rate + "%";
-}
+      while (currentTime < song.duration - 2.0) {
+        const strongBeat = beatIndex % setting.subdivision === 0;
+        const mainBeat = beatIndex % (setting.subdivision * 2) === 0;
 
-// ===== 키 =====
-document.addEventListener("keydown",e=>{
-  if(e.key==="1"){
-    if(mode==="") startSingle();
-    else showAnswer();
-  }
+        let placeChance = setting.density;
 
-  if(e.key==="2"){
-    if(mode==="") startCombo();
-    else generate();
-  }
+        if (strongBeat) placeChance += 0.08;
+        if (mainBeat) placeChance += 0.08;
 
-  if(e.key==="3"){
-    if(mode==="") startSingleQuiz();
-    else goMenu();
-  }
+        if (Math.random() < placeChance) {
+          let chordCount = 1;
 
-  if(e.key==="4" && mode===""){
-    startComboQuiz();
-  }
+          if (setting.maxChord >= 2 && Math.random() < 0.25) {
+            chordCount = 2;
+          }
 
-  if(e.key==="Enter" && (mode==="singleQuiz" || mode==="comboQuiz")){
-    e.preventDefault();
-    if(quizAnswered) generate();
-    else checkQuiz(false);
-  }
-});
-</script>
+          chordCount = Math.min(chordCount, 2);
+
+          const lanes = pickRandomItems([0, 1, 2, 3, 4, 5, 6, 7, 8], chordCount);
+
+          for (const lane of lanes) {
+            result.push({
+              time: currentTime,
+              lane,
+              hit: false,
+              missed: false,
+              el: null
+            });
+          }
+        }
+
+        currentTime += step;
+        beatIndex++;
+      }
+
+      return result.sort((a, b) => a.time - b.time);
+    }
+
+    function createNoteElement(note) {
+      const el = document.createElement("div");
+      el.className = "note";
+      el.style.left = `calc(${note.lane} * (100% / 9))`;
+      game.appendChild(el);
+      note.el = el;
+    }
+
+    function showJudge(text) {
+      judgeView.textContent = text;
+      judgeView.classList.add("show");
+
+      clearTimeout(showJudge.timer);
+      showJudge.timer = setTimeout(() => {
+        judgeView.classList.remove("show");
+      }, 170);
+    }
+
+    function judgeHit(diff) {
+      const abs = Math.abs(diff);
+
+      if (abs <= judgement.great.window) return "great";
+      if (abs <= judgement.good.window) return "good";
+      if (abs <= judgement.nice.window) return "nice";
+      if (abs <= judgement.bad.window) return "bad";
+
+      return null;
+    }
+
+    function applyJudge(type) {
+      if (type === "miss") {
+        counts.miss++;
+        combo = 0;
+        totalJudged++;
+        showJudge("MISS");
+        updateStats();
+        return;
+      }
+
+      counts[type]++;
+      score += judgement[type].score + combo * 3;
+      combo++;
+      maxCombo = Math.max(maxCombo, combo);
+
+      hitWeight += judgement[type].weight;
+      totalJudged++;
+
+      showJudge(judgement[type].label);
+      updateStats();
+    }
+
+    function getCurrentTime() {
+      if (!active) return 0;
+
+      if (audio.src) {
+        return audio.currentTime;
+      }
+
+      return (performance.now() - startTime) / 1000;
+    }
+
+    function gameLoop() {
+      if (!active) return;
+
+      const now = getCurrentTime();
+      const setting = difficultySettings[difficultySelect.value];
+
+      const hitY = game.clientHeight - 92;
+      const fallDuration = hitY / setting.speed;
+
+      for (const note of notes) {
+        if (note.hit || note.missed) continue;
+
+        const appearTime = note.time - fallDuration;
+        const y = (now - appearTime) * setting.speed;
+
+        if (now >= appearTime && !note.el) {
+          createNoteElement(note);
+        }
+
+        if (note.el) {
+          note.el.style.top = `${y}px`;
+        }
+
+        if (!note.hit && now - note.time > setting.missWindow) {
+          note.missed = true;
+
+          if (note.el) {
+            note.el.remove();
+            note.el = null;
+          }
+
+          applyJudge("miss");
+        }
+      }
+
+      const lastNoteTime = notes.length > 0
+        ? Math.max(...notes.map(note => note.time))
+        : 0;
+
+      if (now > lastNoteTime + 2) {
+        finishGame();
+        return;
+      }
+
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function handleKeyDown(e) {
+      if (!active) return;
+
+      const key = e.key;
+      if (!(key in keyToLane)) return;
+
+      if (pressedKeys[key]) return;
+      pressedKeys[key] = true;
+
+      const lane = keyToLane[key];
+      const now = getCurrentTime();
+
+      flashKey(key, true);
+      flashLane(lane);
+
+      const candidates = notes
+        .filter(note => {
+          return !note.hit &&
+                 !note.missed &&
+                 note.lane === lane;
+        })
+        .map(note => ({
+          note,
+          diff: now - note.time,
+          abs: Math.abs(now - note.time)
+        }))
+        .filter(item => item.abs <= judgement.bad.window)
+        .sort((a, b) => a.abs - b.abs);
+
+      if (candidates.length === 0) return;
+
+      const target = candidates[0];
+      const result = judgeHit(target.diff);
+
+      if (!result) return;
+
+      target.note.hit = true;
+
+      if (target.note.el) {
+        target.note.el.remove();
+        target.note.el = null;
+      }
+
+      applyJudge(result);
+    }
+
+    function handleKeyUp(e) {
+      const key = e.key;
+
+      if (!(key in keyToLane)) return;
+
+      pressedKeys[key] = false;
+      flashKey(key, false);
+    }
+
+    function flashKey(key, isDown) {
+      const box = document.querySelector(`.key-box[data-key="${key}"]`);
+      if (!box) return;
+
+      if (isDown) {
+        box.classList.add("pressed");
+      } else {
+        box.classList.remove("pressed");
+      }
+    }
+
+    function flashLane(lane) {
+      const laneEl = document.querySelector(`.lane[data-lane="${lane}"]`);
+      if (!laneEl) return;
+
+      laneEl.classList.add("active");
+
+      setTimeout(() => {
+        laneEl.classList.remove("active");
+      }, 90);
+    }
+
+    function startSynthSong(song) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const startDelay = 0.15;
+      const startAt = audioCtx.currentTime + startDelay;
+      const beat = 60 / song.bpm;
+
+      function playTone(time, freq, duration, gainValue) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(gainValue, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(time);
+        osc.stop(time + duration + 0.02);
+      }
+
+      for (let t = 0; t < song.duration; t += beat) {
+        const beatNumber = Math.round(t / beat);
+        const isStrong = beatNumber % 4 === 0;
+
+        playTone(
+          startAt + t,
+          isStrong ? 220 : 440,
+          0.08,
+          isStrong ? 0.17 : 0.09
+        );
+
+        if (song.bpm >= 135) {
+          playTone(startAt + t + beat / 2, 660, 0.045, 0.045);
+        }
+
+        if (song.bpm >= 160 && beatNumber % 2 === 0) {
+          playTone(startAt + t + beat / 4, 880, 0.035, 0.035);
+        }
+      }
+
+      startTime = performance.now() + startDelay * 1000;
+    }
+
+    function waitForAudioMetadata() {
+      return new Promise((resolve, reject) => {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          resolve();
+          return;
+        }
+
+        audio.onloadedmetadata = () => resolve();
+        audio.onerror = () => reject(new Error("오디오 파일을 불러오지 못했습니다."));
+      });
+    }
+
+    async function startGame() {
+      stopGame();
+      resetStats();
+
+      const song = getSongInfo();
+      const difficulty = difficultySelect.value;
+
+      ready.style.display = "none";
+      active = true;
+      pressedKeys = {};
+
+      try {
+        if (song.custom) {
+          if (!audioFile.files[0]) {
+            alert("내 음악 파일 사용을 선택했다면 오디오 파일을 먼저 선택하세요.");
+            active = false;
+            ready.style.display = "flex";
+            return;
+          }
+
+          audio.src = URL.createObjectURL(audioFile.files[0]);
+          audio.currentTime = 0;
+
+          await waitForAudioMetadata();
+
+          if (Number.isFinite(audio.duration)) {
+            song.duration = audio.duration;
+          }
+
+          notes = generateNotes(song, difficulty);
+
+          await audio.play();
+        } else {
+          audio.removeAttribute("src");
+          audio.load();
+
+          notes = generateNotes(song, difficulty);
+          startSynthSong(song);
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+      } catch (error) {
+        alert(error.message || "게임 시작 중 오류가 발생했습니다.");
+        stopGame();
+      }
+    }
+
+    function stopGame() {
+      active = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      if (audio.src && audio.src.startsWith("blob:")) {
+        URL.revokeObjectURL(audio.src);
+      }
+
+      audio.removeAttribute("src");
+      audio.load();
+
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+
+      notes.forEach(note => {
+        if (note.el) note.el.remove();
+      });
+
+      notes = [];
+      pressedKeys = {};
+
+      document.querySelectorAll(".key-box").forEach(box => {
+        box.classList.remove("pressed");
+      });
+
+      ready.style.display = "flex";
+      ready.innerHTML = `
+        곡과 난이도를 선택한 뒤<br />
+        게임 시작을 누르세요.
+      `;
+    }
+
+    function finishGame() {
+      active = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      audio.pause();
+
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+
+      notes.forEach(note => {
+        if (note.el) note.el.remove();
+      });
+
+      document.querySelectorAll(".key-box").forEach(box => {
+        box.classList.remove("pressed");
+      });
+
+      ready.style.display = "flex";
+      ready.innerHTML = `
+        게임 종료<br />
+        점수: ${score}<br />
+        최고 콤보: ${maxCombo}<br />
+        정확도: ${accuracyEl.textContent}
+      `;
+    }
+
+    startBtn.addEventListener("click", startGame);
+    stopBtn.addEventListener("click", stopGame);
+
+    homeBtn.addEventListener("click", () => {
+      window.location.href = "../index.html";
+    });
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    buildLanes();
+    resetStats();
+  </script>
 </body>
 </html>
