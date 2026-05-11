@@ -77,6 +77,13 @@
             width: 100%;
         }
 
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
         .study-button {
             background-color: white;
             color: var(--cat-dark-pink);
@@ -135,9 +142,15 @@
 
     <!-- 중앙 버튼 -->
     <main class="content-section">
-        <a href="./01/index.html" class="study-button">
-            일본어 읽기 연습 🇯🇵
-        </a>
+        <div class="button-group">
+            <a href="./01/index.html" class="study-button">
+                일본어 읽기 연습 🇯🇵
+            </a>
+
+            <a href="./02/index.html" class="study-button">
+                리듬게임 🎵
+            </a>
+        </div>
     </main>
 
     <!-- 배경 장식 이모지들 -->
