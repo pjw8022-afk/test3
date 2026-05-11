@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9키 리듬게임</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #252b4a, #090b14 70%);
+      color: white;
+      overflow: hidden;
+    }
+
+    .wrap {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+    }
+
+    .panel {
+      width: 280px;
+      height: 720px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 24px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #d8dcff;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+    }
+
+    select,
+    input {
+      background: #171b2f;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    button {
+      margin-top: 12px;
+      background: linear-gradient(135deg, #6d7cff, #9f55ff);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.12);
+    }
+
+    button.secondary {
+      background: #2a2f4d;
+    }
+
+    .stats {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .judge-counts {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #d6d8ef;
+      line-height: 1.7;
+    }
+
+    .game {
+      position: relative;
+      width: 720px;
+      height: 720px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 25px 90px rgba(0, 0, 0, 0.55);
+    }
+
+    .lanes {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      z-index: 1;
+    }
+
+    .lane {
+      border-right: 1px solid rgba(255, 255, 255, 0.11);
+      position: relative;
+    }
+
+    .lane:nth-child(1),
+    .lane:nth-child(2),
+    .lane:nth-child(3) {
+      background: rgba(80, 120, 255, 0.055);
+    }
+
+    .lane:nth-child(4),
+    .lane:nth-child(5),
+    .lane:nth-child(6) {
+      background: rgba(160, 90, 255, 0.065);
+    }
+
+    .lane:nth-child(7),
+    .lane:nth-child(8),
+    .lane:nth-child(9) {
+      background: rgba(80, 220, 255, 0.045);
+    }
+
+    .lane:nth-child(3),
+    .lane:nth-child(6) {
+      border-right: 4px solid rgba(255, 255, 255, 0.38);
+      box-shadow: 4px 0 16px rgba(255, 255, 255, 0.12);
+    }
+
+    .lane:last-child {
+      border-right: none;
+    }
+
+    .lane.active {
+      background: rgba(255, 255, 255, 0.20);
+    }
+
+    .group-labels {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.6;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      color: #dce2ff;
+      letter-spacing: 8px;
+    }
+
+    .hit-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 92px;
+      height: 5px;
+      background: linear-gradient(to right, transparent, #ffffff, transparent);
+      box-shadow: 0 0 18px white;
+      z-index: 4;
+    }
+
+    .key-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      padding: 0 10px;
+      z-index: 5;
+    }
+
+    .key-box {
+      height: 54px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 22px;
+      font-weight: bold;
+      color: #e7e9ff;
+    }
+
+    .key-box.pressed {
+      background: #ffffff;
+      color: #171b2f;
+      transform: translateY(2px);
+    }
+
+    .note {
+      position: absolute;
+      width: calc(100% / 9 - 10px);
+      height: 24px;
+      margin-left: 5px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #55e1ff, #b56bff);
+      box-shadow: 0 0 14px rgba(122, 190, 255, 0.8);
+      z-index: 3;
+    }
+
+    .judge {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 170px;
+      text-align: center;
+      font-size: 46px;
+      font-weight: 900;
+      text-shadow: 0 0 18px black;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: 0.12s;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .judge.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .combo {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 34px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: bold;
+      z-index: 6;
+      text-shadow: 0 0 12px black;
+    }
+
+    .ready {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.42);
+      z-index: 10;
+      padding: 30px;
+      line-height: 1.6;
+    }
+
+    .help {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #c6cae8;
+      line-height: 1.55;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #aeb4d8;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>9키 리듬게임</h1>
+
+      <label>곡 선택</label>
+      <select id="songSelect">
+        <option value="song1">Star Light - BPM 110</option>
+        <option value="song2">Night Drive - BPM 135</option>
+        <option value="song3">Hyper Beat - BPM 165</option>
+        <option value="custom">내 음악 파일 사용</option>
+      </select>
+
+      <label>내 음악 파일</label>
+      <input id="audioFile" type="file" accept="audio/*" />
+
+      <label>커스텀 BPM</label>
+      <input id="customBpm" type="number" value="120" min="60" max="220" />
+
+      <label>난이도</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard</option>
+      </select>
+
+      <button id="startBtn">게임 시작</button>
+      <button id="stopBtn" class="secondary">정지 / 초기화</button>
+
+      <div class="stats">
+        <div>점수: <b id="score">0</b></div>
+        <div>콤보: <b id="comboText">0</b></div>
+        <div>최고 콤보: <b id="maxCombo">0</b></div>
+        <div>정확도: <b id="accuracy">0%</b></div>
+      </div>
+
+      <div class="judge-counts">
+        <div>Great: <span id="greatCount">0</span></div>
+        <div>Good: <span id="goodCount">0</span></div>
+        <div>Nice: <span id="niceCount">0</span></div>
+        <div>Bad: <span id="badCount">0</span></div>
+        <div>Miss: <span id="missCount">0</span></div>
+      </div>
+
+      <div class="help">
+        조작 키: <b>7 8 9 / 4 5 6 / 1 2 3</b><br />
+        노트가 판정선에 닿을 때 해당 키를 누르세요.<br /><br />
+        <span class="small">
+          긴 노트 없음<br />
+          동시 노트는 최대 2개<br />
+          게임 시작 시 음악도 같이 재생
+        </span>
+      </div>
+    </div>
+
+    <div class="game" id="game">
+      <div class="lanes" id="lanes"></div>
+
+      <div class="group-labels">
+        <div>789</div>
+        <div>456</div>
+        <div>123</div>
+      </div>
+
+      <div class="combo" id="comboView">COMBO 0</div>
+      <div class="judge" id="judgeView">GREAT</div>
+      <div class="hit-line"></div>
+      <div class="key-row" id="keyRow"></div>
+
+      <div class="ready" id="ready">
+        곡과 난이도를 선택한 뒤<br />
+        게임 시작을 누르세요.
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const game = document.getElementById("game");
+    const lanesEl = document.getElementById("lanes");
+    const keyRow = document.getElementById("keyRow");
+    const judgeView = document.getElementById("judgeView");
+    const comboView = document.getElementById("comboView");
+    const ready = document.getElementById("ready");
+
+    const songSelect = document.getElementById("songSelect");
+    const audioFile = document.getElementById("audioFile");
+    const customBpm = document.getElementById("customBpm");
+    const difficultySelect = document.getElementById("difficulty");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const audio = document.getElementById("audio");
+
+    const scoreEl = document.getElementById("score");
+    const comboTextEl = document.getElementById("comboText");
+    const maxComboEl = document.getElementById("maxCombo");
+    const accuracyEl = document.getElementById("accuracy");
+
+    const greatCountEl = document.getElementById("greatCount");
+    const goodCountEl = document.getElementById("goodCount");
+    const niceCountEl = document.getElementById("niceCount");
+    const badCountEl = document.getElementById("badCount");
+    const missCountEl = document.getElementById("missCount");
+
+    const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
+
+    const keyToLane = {
+      "7": 0,
+      "8": 1,
+      "9": 2,
+      "4": 3,
+      "5": 4,
+      "6": 5,
+      "1": 6,
+      "2": 7,
+      "3": 8
+    };
+
+    const songs = {
+      song1: { name: "Star Light", bpm: 110, duration: 75 },
+      song2: { name: "Night Drive", bpm: 135, duration: 80 },
+      song3: { name: "Hyper Beat", bpm: 165, duration: 90 }
+    };
+
+    const difficultySettings = {
+      easy: {
+        density: 0.52,
+        maxChord: 1,
+        speed: 520,
+        missWindow: 0.20,
+        subdivision: 1
+      },
+      normal: {
+        density: 0.72,
+        maxChord: 2,
+        speed: 610,
+        missWindow: 0.20,
+        subdivision: 2
+      },
+      hard: {
+        density: 0.88,
+        maxChord: 2,
+        speed: 720,
+        missWindow: 0.20,
+        subdivision: 2
+      }
+    };
+
+    const judgement = {
+      great: { window: 0.045, score: 1000, weight: 1.00, label: "GREAT" },
+      good:  { window: 0.085, score: 700,  weight: 0.75, label: "GOOD" },
+      nice:  { window: 0.125, score: 450,  weight: 0.45, label: "NICE" },
+      bad:   { window: 0.180, score: 120,  weight: 0.15, label: "BAD" }
+    };
+
+    let notes = [];
+    let active = false;
+    let startTime = 0;
+    let animationId = null;
+    let audioCtx = null;
+
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let hitWeight = 0;
+    let totalJudged = 0;
+
+    let counts = {
+      great: 0,
+      good: 0,
+      nice: 0,
+      bad: 0,
+      miss: 0
+    };
+
+    let pressedKeys = {};
+
+    function buildLanes() {
+      lanesEl.innerHTML = "";
+      keyRow.innerHTML = "";
+
+      for (let i = 0; i < 9; i++) {
+        const lane = document.createElement("div");
+        lane.className = "lane";
+        lane.dataset.lane = i;
+        lanesEl.appendChild(lane);
+
+        const keyBox = document.createElement("div");
+        keyBox.className = "key-box";
+        keyBox.textContent = keys[i];
+        keyBox.dataset.key = keys[i];
+        keyRow.appendChild(keyBox);
+      }
+    }
+
+    function resetStats() {
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      hitWeight = 0;
+      totalJudged = 0;
+
+      counts = {
+        great: 0,
+        good: 0,
+        nice: 0,
+        bad: 0,
+        miss: 0
+      };
+
+      updateStats();
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score;
+      comboTextEl.textContent = combo;
+      maxComboEl.textContent = maxCombo;
+      comboView.textContent = `COMBO ${combo}`;
+
+      greatCountEl.textContent = counts.great;
+      goodCountEl.textContent = counts.good;
+      niceCountEl.textContent = counts.nice;
+      badCountEl.textContent = counts.bad;
+      missCountEl.textContent = counts.miss;
+
+      const acc = totalJudged === 0
+        ? 0
+        : Math.round((hitWeight / totalJudged) * 1000) / 10;
+
+      accuracyEl.textContent = `${acc}%`;
+    }
+
+    function getSongInfo() {
+      const selected = songSelect.value;
+
+      if (selected === "custom") {
+        return {
+          name: "Custom",
+          bpm: Number(customBpm.value) || 120,
+          duration: 90,
+          custom: true
+        };
+      }
+
+      return {
+        ...songs[selected],
+        custom: false
+      };
+    }
+
+    function pickRandomItems(array, count) {
+      const copied = [...array];
+      const picked = [];
+
+      while (picked.length < count && copied.length > 0) {
+        const index = Math.floor(Math.random() * copied.length);
+        picked.push(copied.splice(index, 1)[0]);
+      }
+
+      return picked;
+    }
+
+    function generateNotes(song, difficulty) {
+      const setting = difficultySettings[difficulty];
+      const beat = 60 / song.bpm;
+      const step = beat / setting.subdivision;
+
+      const result = [];
+      let currentTime = 2.0;
+      let beatIndex = 0;
+
+      while (currentTime < song.duration - 2.0) {
+        const strongBeat = beatIndex % setting.subdivision === 0;
+        const mainBeat = beatIndex % (setting.subdivision * 2) === 0;
+
+        let placeChance = setting.density;
+
+        if (strongBeat) placeChance += 0.08;
+        if (mainBeat) placeChance += 0.08;
+
+        if (Math.random() < placeChance) {
+          let chordCount = 1;
+
+          if (setting.maxChord >= 2 && Math.random() < 0.25) {
+            chordCount = 2;
+          }
+
+          chordCount = Math.min(chordCount, 2);
+
+          const lanes = pickRandomItems([0, 1, 2, 3, 4, 5, 6, 7, 8], chordCount);
+
+          for (const lane of lanes) {
+            result.push({
+              time: currentTime,
+              lane,
+              hit: false,
+              missed: false,
+              el: null
+            });
+          }
+        }
+
+        currentTime += step;
+        beatIndex++;
+      }
+
+      return result.sort((a, b) => a.time - b.time);
+    }
+
+    function createNoteElement(note) {
+      const el = document.createElement("div");
+      el.className = "note";
+      el.style.left = `calc(${note.lane} * (100% / 9))`;
+      game.appendChild(el);
+      note.el = el;
+    }
+
+    function showJudge(text) {
+      judgeView.textContent = text;
+      judgeView.classList.add("show");
+
+      clearTimeout(showJudge.timer);
+      showJudge.timer = setTimeout(() => {
+        judgeView.classList.remove("show");
+      }, 170);
+    }
+
+    function judgeHit(diff) {
+      const abs = Math.abs(diff);
+
+      if (abs <= judgement.great.window) return "great";
+      if (abs <= judgement.good.window) return "good";
+      if (abs <= judgement.nice.window) return "nice";
+      if (abs <= judgement.bad.window) return "bad";
+
+      return null;
+    }
+
+    function applyJudge(type) {
+      if (type === "miss") {
+        counts.miss++;
+        combo = 0;
+        totalJudged++;
+        showJudge("MISS");
+        updateStats();
+        return;
+      }
+
+      counts[type]++;
+      score += judgement[type].score + combo * 3;
+      combo++;
+      maxCombo = Math.max(maxCombo, combo);
+
+      hitWeight += judgement[type].weight;
+      totalJudged++;
+
+      showJudge(judgement[type].label);
+      updateStats();
+    }
+
+    function getCurrentTime() {
+      if (!active) return 0;
+
+      if (audio.src) {
+        return audio.currentTime;
+      }
+
+      return (performance.now() - startTime) / 1000;
+    }
+
+    function gameLoop() {
+      if (!active) return;
+
+      const now = getCurrentTime();
+      const setting = difficultySettings[difficultySelect.value];
+
+      const hitY = game.clientHeight - 92;
+      const fallDuration = hitY / setting.speed;
+
+      for (const note of notes) {
+        if (note.hit || note.missed) continue;
+
+        const appearTime = note.time - fallDuration;
+        const y = (now - appearTime) * setting.speed;
+
+        if (now >= appearTime && !note.el) {
+          createNoteElement(note);
+        }
+
+        if (note.el) {
+          note.el.style.top = `${y}px`;
+        }
+
+        if (!note.hit && now - note.time > setting.missWindow) {
+          note.missed = true;
+
+          if (note.el) {
+            note.el.remove();
+            note.el = null;
+          }
+
+          applyJudge("miss");
+        }
+      }
+
+      const lastNoteTime = notes.length > 0
+        ? Math.max(...notes.map(note => note.time))
+        : 0;
+
+      if (now > lastNoteTime + 2) {
+        finishGame();
+        return;
+      }
+
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function handleKeyDown(e) {
+      if (!active) return;
+
+      const key = e.key;
+      if (!(key in keyToLane)) return;
+
+      if (pressedKeys[key]) return;
+      pressedKeys[key] = true;
+
+      const lane = keyToLane[key];
+      const now = getCurrentTime();
+
+      flashKey(key, true);
+      flashLane(lane);
+
+      const candidates = notes
+        .filter(note => {
+          return !note.hit &&
+                 !note.missed &&
+                 note.lane === lane;
+        })
+        .map(note => ({
+          note,
+          diff: now - note.time,
+          abs: Math.abs(now - note.time)
+        }))
+        .filter(item => item.abs <= judgement.bad.window)
+        .sort((a, b) => a.abs - b.abs);
+
+      if (candidates.length === 0) return;
+
+      const target = candidates[0];
+      const result = judgeHit(target.diff);
+
+      if (!result) return;
+
+      target.note.hit = true;
+
+      if (target.note.el) {
+        target.note.el.remove();
+        target.note.el = null;
+      }
+
+      applyJudge(result);
+    }
+
+    function handleKeyUp(e) {
+      const key = e.key;
+
+      if (!(key in keyToLane)) return;
+
+      pressedKeys[key] = false;
+      flashKey(key, false);
+    }
+
+    function flashKey(key, isDown) {
+      const box = document.querySelector(`.key-box[data-key="${key}"]`);
+      if (!box) return;
+
+      if (isDown) {
+        box.classList.add("pressed");
+      } else {
+        box.classList.remove("pressed");
+      }
+    }
+
+    function flashLane(lane) {
+      const laneEl = document.querySelector(`.lane[data-lane="${lane}"]`);
+      if (!laneEl) return;
+
+      laneEl.classList.add("active");
+
+      setTimeout(() => {
+        laneEl.classList.remove("active");
+      }, 90);
+    }
+
+    function startSynthSong(song) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const startDelay = 0.15;
+      const startAt = audioCtx.currentTime + startDelay;
+      const beat = 60 / song.bpm;
+
+      function playTone(time, freq, duration, gainValue) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(gainValue, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(time);
+        osc.stop(time + duration + 0.02);
+      }
+
+      for (let t = 0; t < song.duration; t += beat) {
+        const beatNumber = Math.round(t / beat);
+        const isStrong = beatNumber % 4 === 0;
+
+        playTone(
+          startAt + t,
+          isStrong ? 220 : 440,
+          0.08,
+          isStrong ? 0.17 : 0.09
+        );
+
+        if (song.bpm >= 135) {
+          playTone(startAt + t + beat / 2, 660, 0.045, 0.045);
+        }
+
+        if (song.bpm >= 160 && beatNumber % 2 === 0) {
+          playTone(startAt + t + beat / 4, 880, 0.035, 0.035);
+        }
+      }
+
+      startTime = performance.now() + startDelay * 1000;
+    }
+
+    function waitForAudioMetadata() {
+      return new Promise((resolve, reject) => {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          resolve();
+          return;
+        }
+
+        audio.onloadedmetadata = () => resolve();
+        audio.onerror = () => reject(new Error("오디오 파일을 불러오지 못했습니다."));
+      });
+    }
+
+    async function startGame() {
+      stopGame();
+      resetStats();
+
+      const song = getSongInfo();
+      const difficulty = difficultySelect.value;
+
+      ready.style.display = "none";
+      active = true;
+      pressedKeys = {};
+
+      try {
+        if (song.custom) {
+          if (!audioFile.files[0]) {
+            alert("내 음악 파일 사용을 선택했다면 오디오 파일을 먼저 선택하세요.");
+            active = false;
+            ready.style.display = "flex";
+            return;
+          }
+
+          audio.src = URL.createObjectURL(audioFile.files[0]);
+          audio.currentTime = 0;
+
+          await waitForAudioMetadata();
+
+          if (Number.isFinite(audio.duration)) {
+            song.duration = audio.duration;
+          }
+
+          notes = generateNotes(song, difficulty);
+
+          await audio.play();
+        } else {
+          audio.removeAttribute("src");
+          audio.load();
+
+          notes = generateNotes(song, difficulty);
+          startSynthSong(song);
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+      } catch (error) {
+        alert(error.message || "게임 시작 중 오류가 발생했습니다.");
+        stopGame();
+      }
+    }
+
+    function stopGame() {
+      active = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      if (audio.src && audio.src.startsWith("blob:")) {
+        URL.revokeObjectURL(audio.src);
+      }
+
+      audio.removeAttribute("src");
+      audio.load();
+
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+
+      notes.forEach(note => {
+        if (note.el) note.el.remove();
+      });
+
+      notes = [];
+      pressedKeys = {};
+
+      document.querySelectorAll(".key-box").forEach(box => {
+        box.classList.remove("pressed");
+      });
+
+      ready.style.display = "flex";
+      ready.innerHTML = `
+        곡과 난이도를 선택한 뒤<br />
+        게임 시작을 누르세요.
+      `;
+    }
+
+    function finishGame() {
+      active = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      audio.pause();
+
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+
+      notes.forEach(note => {
+        if (note.el) note.el.remove();
+      });
+
+      document.querySelectorAll(".key-box").forEach(box => {
+        box.classList.remove("pressed");
+      });
+
+      ready.style.display = "flex";
+      ready.innerHTML = `
+        게임 종료<br />
+        점수: ${score}<br />
+        최고 콤보: ${maxCombo}<br />
+        정확도: ${accuracyEl.textContent}
+      `;
+    }
+
+    startBtn.addEventListener("click", startGame);
+    stopBtn.addEventListener("click", stopGame);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    buildLanes();
+    resetStats();
+  </script>
+</body>
+</html>
