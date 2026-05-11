@@ -316,6 +316,7 @@
 
       <button id="startBtn">게임 시작</button>
       <button id="stopBtn" class="secondary">정지 / 초기화</button>
+      <button id="homeBtn" class="secondary">홈페이지로</button>
 
       <div class="stats">
         <div>점수: <b id="score">0</b></div>
@@ -380,6 +381,7 @@
     const difficultySelect = document.getElementById("difficulty");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
+    const homeBtn = document.getElementById("homeBtn");
     const audio = document.getElementById("audio");
 
     const scoreEl = document.getElementById("score");
@@ -965,6 +967,11 @@
 
     startBtn.addEventListener("click", startGame);
     stopBtn.addEventListener("click", stopGame);
+
+    homeBtn.addEventListener("click", () => {
+      window.location.href = "../index.html";
+    });
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
