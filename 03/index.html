@@ -279,6 +279,31 @@
       color: #93c5fd;
     }
 
+    .detected-note-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .detected-note-cell {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(147, 197, 253, 0.1);
+      color: #93c5fd;
+      font-weight: 900;
+      word-break: keep-all;
+    }
+
+    .detected-note-cell.empty {
+      opacity: 0.18;
+    }
+
     .score-correct {
       color: #86efac;
     }
@@ -394,7 +419,14 @@
         <div class="info-grid">
           <div class="info-box">
             <div class="info-label">감지된 음</div>
-            <div class="info-value detected" id="detectedNote">-</div>
+            <div class="info-value detected" id="detectedNote">
+              <div class="detected-note-grid">
+                <div class="detected-note-cell">-</div>
+                <div class="detected-note-cell">-</div>
+                <div class="detected-note-cell empty"></div>
+                <div class="detected-note-cell empty"></div>
+              </div>
+            </div>
           </div>
           <div class="info-box">
             <div class="info-label">주파수</div>
@@ -418,6 +450,7 @@
       <p>2. 실제 정답/오답 판정이 필요하면 <strong>마이크 판정 켜기</strong>를 누르고 브라우저 권한을 허용합니다.</p>
       <p>3. 마이크 권한이 거부되거나 미리보기 환경에서 차단되어도 출제 기능은 계속 작동합니다.</p>
       <p>4. 같은 음 이름은 옥타브와 관계없이 같은 정답으로 처리합니다. 예: C2, C3, C4는 모두 C로 인정됩니다.</p>
+      <p>5. 감지된 반음은 샾 표기와 플랫 표기를 함께 보여줍니다. 예: C# / 도# / D♭ / 레♭</p>
     </section>
   </main>
 
@@ -440,7 +473,106 @@
     ];
 
     const NOTE_NAMES_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const GUITAR_STRING_LABELS = ["6번", "5번", "4번"]; 
+    const GUITAR_STRING_LABELS = ["6번", "5번", "4번"];
+
+    const NOTE_DISPLAY_MAP = {
+      C: {
+        english: "C",
+        korean: "도",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      "C#": {
+        english: "C#",
+        korean: "도#",
+        sharpEnglish: "C#",
+        sharpKorean: "도#",
+        flatEnglish: "D♭",
+        flatKorean: "레♭"
+      },
+      D: {
+        english: "D",
+        korean: "레",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      "D#": {
+        english: "D#",
+        korean: "레#",
+        sharpEnglish: "D#",
+        sharpKorean: "레#",
+        flatEnglish: "E♭",
+        flatKorean: "미♭"
+      },
+      E: {
+        english: "E",
+        korean: "미",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      F: {
+        english: "F",
+        korean: "파",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      "F#": {
+        english: "F#",
+        korean: "파#",
+        sharpEnglish: "F#",
+        sharpKorean: "파#",
+        flatEnglish: "G♭",
+        flatKorean: "솔♭"
+      },
+      G: {
+        english: "G",
+        korean: "솔",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      "G#": {
+        english: "G#",
+        korean: "솔#",
+        sharpEnglish: "G#",
+        sharpKorean: "솔#",
+        flatEnglish: "A♭",
+        flatKorean: "라♭"
+      },
+      A: {
+        english: "A",
+        korean: "라",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      },
+      "A#": {
+        english: "A#",
+        korean: "라#",
+        sharpEnglish: "A#",
+        sharpKorean: "라#",
+        flatEnglish: "B♭",
+        flatKorean: "시♭"
+      },
+      B: {
+        english: "B",
+        korean: "시",
+        sharpEnglish: null,
+        sharpKorean: null,
+        flatEnglish: null,
+        flatKorean: null
+      }
+    };
 
     const currentNoteEl = document.getElementById("currentNote");
     const stringLineEl = document.getElementById("stringLine");
@@ -490,6 +622,7 @@
           includeEnglishEl.checked = true;
           setStatus("영어 또는 한글 계이름 중 하나는 반드시 선택해야 합니다", "warn");
         }
+
         if (isRunning) nextQuestion();
       });
     });
@@ -509,6 +642,54 @@
 
     function setMicHelp(message) {
       micHelpEl.textContent = message;
+    }
+
+    function renderDetectedPlaceholder(text = "-") {
+      detectedNoteEl.innerHTML = `
+        <div class="detected-note-grid">
+          <div class="detected-note-cell">${text}</div>
+          <div class="detected-note-cell">${text}</div>
+          <div class="detected-note-cell empty"></div>
+          <div class="detected-note-cell empty"></div>
+        </div>
+      `;
+    }
+
+    function renderDetectedNote(canonicalNote) {
+      const display = NOTE_DISPLAY_MAP[canonicalNote];
+
+      if (!display) {
+        renderDetectedPlaceholder("-");
+        return;
+      }
+
+      const hasAccidental = Boolean(display.sharpEnglish && display.flatEnglish);
+
+      if (!hasAccidental) {
+        detectedNoteEl.innerHTML = `
+          <div class="detected-note-grid">
+            <div class="detected-note-cell">${display.english}</div>
+            <div class="detected-note-cell">${display.korean}</div>
+            <div class="detected-note-cell empty"></div>
+            <div class="detected-note-cell empty"></div>
+          </div>
+        `;
+        return;
+      }
+
+      detectedNoteEl.innerHTML = `
+        <div class="detected-note-grid">
+          <div class="detected-note-cell">${display.sharpEnglish}</div>
+          <div class="detected-note-cell">${display.sharpKorean}</div>
+          <div class="detected-note-cell">${display.flatEnglish}</div>
+          <div class="detected-note-cell">${display.flatKorean}</div>
+        </div>
+      `;
+    }
+
+    function getDetectedMainLabel(canonicalNote) {
+      const display = NOTE_DISPLAY_MAP[canonicalNote];
+      return display ? display.english : canonicalNote;
     }
 
     function buildQuestionPool() {
@@ -539,7 +720,11 @@
             return;
           }
 
-          pool.push({ label, canonical: note.canonical, stringLabel: null });
+          pool.push({
+            label,
+            canonical: note.canonical,
+            stringLabel: null
+          });
         });
       });
 
@@ -554,6 +739,7 @@
       nextBtn.disabled = false;
       stopBtn.disabled = false;
       micBtn.disabled = false;
+
       nextQuestion();
       restartTimer();
       setStatus("출제 중입니다. 마이크 판정이 필요하면 별도로 켜세요", "");
@@ -573,7 +759,7 @@
         await startMicrophone();
         isMicEnabled = true;
         micBtn.disabled = true;
-        detectedNoteEl.textContent = "대기";
+        renderDetectedPlaceholder("대기");
         frequencyEl.textContent = "-";
         setMicHelp("마이크 판정이 켜졌습니다. 기타를 한 음씩 또렷하게 연주하세요.");
         setStatus("마이크 판정 중입니다", "correct");
@@ -586,11 +772,13 @@
     async function startMicrophone() {
       const mediaDevices = navigator.mediaDevices;
       const getUserMedia = mediaDevices && mediaDevices.getUserMedia;
+
       if (!getUserMedia) {
         throw new Error("MIC_UNSUPPORTED");
       }
 
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
       if (!AudioContextClass) {
         throw new Error("AUDIO_CONTEXT_UNSUPPORTED");
       }
@@ -604,6 +792,7 @@
       });
 
       audioContext = new AudioContextClass();
+
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
@@ -620,7 +809,7 @@
     function handleMicrophoneError(error) {
       console.warn("Microphone unavailable:", error);
       stopMicrophoneOnly();
-      detectedNoteEl.textContent = "마이크 꺼짐";
+      renderDetectedPlaceholder("꺼짐");
       frequencyEl.textContent = "-";
       micBtn.disabled = false;
 
@@ -657,6 +846,7 @@
 
     function nextQuestion() {
       const pool = buildQuestionPool();
+
       if (pool.length === 0) {
         setStatus("출제할 계이름이 없습니다", "wrong");
         return;
@@ -669,6 +859,7 @@
 
       stringLineEl.textContent = currentQuestion.stringLabel ? `${currentQuestion.stringLabel} 줄` : "";
       currentNoteEl.textContent = currentQuestion.label;
+
       const noteKind = currentQuestion.canonical.includes("#") ? "반음 포함" : "기본 음";
       noteTypeEl.textContent = currentQuestion.stringLabel ? `줄 포함 · ${noteKind}` : noteKind;
 
@@ -695,8 +886,11 @@
       micBtn.disabled = false;
       currentQuestion = null;
       hasAnsweredCurrent = false;
+
       stringLineEl.textContent = "";
       currentNoteEl.textContent = "?";
+      renderDetectedPlaceholder("-");
+      frequencyEl.textContent = "-";
 
       setStatus("정지됨", "");
       setMicHelp("마이크 판정은 HTTPS 또는 localhost 환경에서 가장 안정적으로 작동합니다. 권한을 거부해도 랜덤 출제 기능은 계속 사용할 수 있습니다.");
@@ -744,9 +938,9 @@
 
       if (frequency !== -1) {
         const detected = frequencyToNoteName(frequency);
-        detectedNoteEl.textContent = detected.note;
+        renderDetectedNote(detected.canonical);
         frequencyEl.textContent = `${frequency.toFixed(1)}Hz`;
-        checkAnswer(detected.note);
+        checkAnswer(detected.canonical);
       }
 
       animationId = requestAnimationFrame(detectPitchLoop);
@@ -756,22 +950,25 @@
       if (!currentQuestion || hasAnsweredCurrent) return;
 
       const now = Date.now();
+
       if (now - lastJudgedAt < 450) return;
+
       lastJudgedAt = now;
 
       const detectedCanonical = normalizeToCanonical(detectedNote);
       const targetCanonical = currentQuestion.canonical;
+      const detectedLabel = getDetectedMainLabel(detectedCanonical);
 
       hasAnsweredCurrent = true;
 
       if (detectedCanonical === targetCanonical) {
         correctCount += 1;
         correctCountEl.textContent = String(correctCount);
-        setStatus(`정답! 감지: ${detectedNote}`, "correct");
+        setStatus(`정답! 감지: ${detectedLabel}`, "correct");
       } else {
         wrongCount += 1;
         wrongCountEl.textContent = String(wrongCount);
-        setStatus(`오답. 감지: ${detectedNote}`, "wrong");
+        setStatus(`오답. 감지: ${detectedLabel}`, "wrong");
       }
     }
 
@@ -796,18 +993,25 @@
       const midi = Math.round(12 * Math.log2(frequency / 440) + 69);
       const noteIndex = ((midi % 12) + 12) % 12;
       const octave = Math.floor(midi / 12) - 1;
+      const canonical = NOTE_NAMES_SHARP[noteIndex];
+
       return {
-        note: NOTE_NAMES_SHARP[noteIndex] + octave,
+        note: canonical + octave,
+        canonical,
+        octave,
         midi
       };
     }
 
     function autoCorrelate(inputBuffer, sampleRate) {
       let rms = 0;
+
       for (let i = 0; i < inputBuffer.length; i += 1) {
         rms += inputBuffer[i] * inputBuffer[i];
       }
+
       rms = Math.sqrt(rms / inputBuffer.length);
+
       if (rms < 0.015) return -1;
 
       let start = 0;
@@ -830,9 +1034,11 @@
 
       const buffer = inputBuffer.slice(start, end);
       const size = buffer.length;
+
       if (size < 32) return -1;
 
       const correlations = new Array(size).fill(0);
+
       for (let lag = 0; lag < size; lag += 1) {
         for (let i = 0; i < size - lag; i += 1) {
           correlations[lag] += buffer[i] * buffer[i + lag];
@@ -840,12 +1046,14 @@
       }
 
       let offset = 0;
+
       while (offset + 1 < correlations.length && correlations[offset] > correlations[offset + 1]) {
         offset += 1;
       }
 
       let maxValue = -1;
       let maxPosition = -1;
+
       for (let i = offset; i < size; i += 1) {
         if (correlations[i] > maxValue) {
           maxValue = correlations[i];
@@ -865,6 +1073,7 @@
       if (!Number.isFinite(period) || period <= 0) return -1;
 
       const frequency = sampleRate / period;
+
       if (frequency < 70 || frequency > 1200) return -1;
 
       return frequency;
@@ -888,18 +1097,32 @@
         assertEqual(normalizeToCanonical("Db3"), "C#", "Db3는 C#로 정규화되어야 함");
         assertEqual(normalizeToCanonical("D♭3"), "C#", "D♭3는 C#로 정규화되어야 함");
         assertEqual(normalizeToCanonical("Bb2"), "A#", "Bb2는 A#로 정규화되어야 함");
+
         assertEqual(frequencyToNoteName(440).note, "A4", "440Hz는 A4여야 함");
+        assertEqual(frequencyToNoteName(440).canonical, "A", "440Hz의 canonical은 A여야 함");
         assertEqual(frequencyToNoteName(261.63).note, "C4", "261.63Hz는 C4에 가까워야 함");
+        assertEqual(frequencyToNoteName(261.63).canonical, "C", "261.63Hz의 canonical은 C여야 함");
+
+        assertEqual(NOTE_DISPLAY_MAP.C.english, "C", "C의 영어 표기는 C여야 함");
+        assertEqual(NOTE_DISPLAY_MAP.C.korean, "도", "C의 한글 표기는 도여야 함");
+        assertEqual(NOTE_DISPLAY_MAP["C#"].sharpEnglish, "C#", "C#의 샾 영어 표기는 C#이어야 함");
+        assertEqual(NOTE_DISPLAY_MAP["C#"].sharpKorean, "도#", "C#의 샾 한글 표기는 도#이어야 함");
+        assertEqual(NOTE_DISPLAY_MAP["C#"].flatEnglish, "D♭", "C#의 플랫 영어 표기는 D♭이어야 함");
+        assertEqual(NOTE_DISPLAY_MAP["C#"].flatKorean, "레♭", "C#의 플랫 한글 표기는 레♭이어야 함");
+
         assertTrue(buildQuestionPool().length > 0, "출제 풀은 비어 있으면 안 됨");
 
         const previousStringSetting = includeStringEl.checked;
         includeStringEl.checked = true;
+
         const stringPool = buildQuestionPool();
+
         assertTrue(stringPool.some((item) => item.stringLabel === "6번"), "줄 포함 선택 시 6번 줄 문제가 있어야 함");
         assertTrue(stringPool.some((item) => item.stringLabel === "5번"), "줄 포함 선택 시 5번 줄 문제가 있어야 함");
         assertTrue(stringPool.some((item) => item.stringLabel === "4번"), "줄 포함 선택 시 4번 줄 문제가 있어야 함");
         assertTrue(stringPool.every((item) => !item.label.startsWith("6번 ") && !item.label.startsWith("5번 ") && !item.label.startsWith("4번 ")), "줄 번호는 계이름 라벨에 직접 붙으면 안 됨");
         assertTrue(stringPool.every((item) => ["6번", "5번", "4번"].includes(item.stringLabel)), "줄 포함 문제는 6번, 5번, 4번 중 하나여야 함");
+
         includeStringEl.checked = previousStringSetting;
 
         setStatus("테스트 통과", "correct");
