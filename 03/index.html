@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>기타 계이름 랜덤 훈련</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #111827, #1f2937, #0f172a);
+      color: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      background: rgba(17, 24, 39, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header-top {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .home-btn {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #0f172a;
+      font-size: 15px;
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .home-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .home-btn:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      .header-top {
+        grid-template-columns: 1fr;
+      }
+
+      .home-btn {
+        justify-self: center;
+      }
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      color: #cbd5e1;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 820px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 24px;
+    }
+
+    .note-display {
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .string-line {
+      min-height: 58px;
+      font-size: clamp(32px, 6vw, 64px);
+      font-weight: 900;
+      line-height: 1;
+      color: #93c5fd;
+      letter-spacing: -0.04em;
+    }
+
+    .current-note {
+      min-height: 150px;
+      font-size: clamp(72px, 14vw, 160px);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      color: #facc15;
+      text-shadow: 0 10px 32px rgba(250, 204, 21, 0.18);
+      word-break: keep-all;
+    }
+
+    .note-type {
+      color: #e5e7eb;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .status {
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      background: rgba(148, 163, 184, 0.14);
+      color: #cbd5e1;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .status.correct {
+      background: rgba(34, 197, 94, 0.18);
+      color: #86efac;
+    }
+
+    .status.wrong {
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+    }
+
+    .status.warn {
+      background: rgba(250, 204, 21, 0.16);
+      color: #fde68a;
+    }
+
+    .controls {
+      display: grid;
+      gap: 18px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .speed-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .speed-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: #facc15;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      color: #0f172a;
+      background: #facc15;
+      transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+    }
+
+    button.danger {
+      background: #fb7185;
+    }
+
+    button.mic {
+      background: #93c5fd;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .info-box {
+      background: rgba(15, 23, 42, 0.72);
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .info-label {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .info-value {
+      font-size: 22px;
+      font-weight: 900;
+      min-height: 30px;
+    }
+
+    .detected {
+      color: #93c5fd;
+    }
+
+    .score-correct {
+      color: #86efac;
+    }
+
+    .score-wrong {
+      color: #fca5a5;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #facc15;
+      flex: 0 0 auto;
+    }
+
+    .guide {
+      margin-top: 20px;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .guide strong {
+      color: #f8fafc;
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="header-top">
+        <div aria-hidden="true"></div>
+        <h1>기타 계이름 랜덤 훈련</h1>
+        <a class="home-btn" href="../index.html">홈페이지로</a>
+      </div>
+      <p class="subtitle">
+        화면에 나오는 계이름을 보고 기타로 연주하세요. 마이크 판정을 켜면 입력된 음정을 분석해 정답과 오답을 판정합니다.
+      </p>
+    </header>
+
+    <section class="main-grid">
+      <div class="card note-display">
+        <div class="note-type" id="noteType">대기 중</div>
+        <div class="string-line" id="stringLine"></div>
+        <div class="current-note" id="currentNote">?</div>
+        <div class="status" id="status">시작 버튼을 누르세요</div>
+      </div>
+
+      <div class="card controls">
+        <div class="control-group">
+          <label for="speedRange">계이름 변경 속도</label>
+          <input id="speedRange" type="range" min="1" max="10" value="3" step="1" />
+          <div class="speed-row">
+            <span>1초</span>
+            <span class="speed-value"><span id="speedValue">3</span>초</span>
+            <span>10초</span>
+          </div>
+        </div>
+
+        <div class="control-group options">
+          <label>출제 범위</label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="includeEnglish" checked />
+            영어 계이름 C, D, E, F, G, A, B 포함
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="includeKorean" checked />
+            한글 계이름 도, 레, 미, 파, 솔, 라, 시 포함
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="includeAccidentals" checked />
+            샾(#), 플랫(♭) 포함
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="includeString" />
+            줄 포함: 6번 줄, 5번 줄, 4번 줄 포함
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button id="startBtn">출제 시작</button>
+          <button class="secondary" id="nextBtn">다음 문제</button>
+          <button class="mic" id="micBtn">마이크 판정 켜기</button>
+          <button class="danger" id="stopBtn">정지</button>
+          <button class="secondary" id="resetBtn">점수 초기화</button>
+          <button class="secondary" id="testBtn">테스트 실행</button>
+        </div>
+
+        <p class="small-note" id="micHelp">
+          마이크 판정은 HTTPS 또는 localhost 환경에서 가장 안정적으로 작동합니다. 권한을 거부해도 랜덤 출제 기능은 계속 사용할 수 있습니다.
+        </p>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">감지된 음</div>
+            <div class="info-value detected" id="detectedNote">-</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">주파수</div>
+            <div class="info-value" id="frequency">-</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">정답</div>
+            <div class="info-value score-correct" id="correctCount">0</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">오답</div>
+            <div class="info-value score-wrong" id="wrongCount">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide">
+      <p><strong>사용 방법</strong></p>
+      <p>1. 먼저 <strong>출제 시작</strong>을 눌러 랜덤 계이름 출제를 시작합니다.</p>
+      <p>2. 실제 정답/오답 판정이 필요하면 <strong>마이크 판정 켜기</strong>를 누르고 브라우저 권한을 허용합니다.</p>
+      <p>3. 마이크 권한이 거부되거나 미리보기 환경에서 차단되어도 출제 기능은 계속 작동합니다.</p>
+      <p>4. 같은 음 이름은 옥타브와 관계없이 같은 정답으로 처리합니다. 예: C2, C3, C4는 모두 C로 인정됩니다.</p>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const NOTE_ALIASES = [
+      { canonical: "C", labels: ["C", "도"] },
+      { canonical: "C#", labels: ["C#", "C♯", "D♭", "Db", "도#", "도♯", "레♭", "레b"] },
+      { canonical: "D", labels: ["D", "레"] },
+      { canonical: "D#", labels: ["D#", "D♯", "E♭", "Eb", "레#", "레♯", "미♭", "미b"] },
+      { canonical: "E", labels: ["E", "미"] },
+      { canonical: "F", labels: ["F", "파"] },
+      { canonical: "F#", labels: ["F#", "F♯", "G♭", "Gb", "파#", "파♯", "솔♭", "솔b"] },
+      { canonical: "G", labels: ["G", "솔"] },
+      { canonical: "G#", labels: ["G#", "G♯", "A♭", "Ab", "솔#", "솔♯", "라♭", "라b"] },
+      { canonical: "A", labels: ["A", "라"] },
+      { canonical: "A#", labels: ["A#", "A♯", "B♭", "Bb", "라#", "라♯", "시♭", "시b"] },
+      { canonical: "B", labels: ["B", "시"] }
+    ];
+
+    const NOTE_NAMES_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const GUITAR_STRING_LABELS = ["6번", "5번", "4번"]; 
+
+    const currentNoteEl = document.getElementById("currentNote");
+    const stringLineEl = document.getElementById("stringLine");
+    const noteTypeEl = document.getElementById("noteType");
+    const statusEl = document.getElementById("status");
+    const speedRange = document.getElementById("speedRange");
+    const speedValue = document.getElementById("speedValue");
+    const startBtn = document.getElementById("startBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const micBtn = document.getElementById("micBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const testBtn = document.getElementById("testBtn");
+    const detectedNoteEl = document.getElementById("detectedNote");
+    const frequencyEl = document.getElementById("frequency");
+    const correctCountEl = document.getElementById("correctCount");
+    const wrongCountEl = document.getElementById("wrongCount");
+    const includeEnglishEl = document.getElementById("includeEnglish");
+    const includeKoreanEl = document.getElementById("includeKorean");
+    const includeAccidentalsEl = document.getElementById("includeAccidentals");
+    const includeStringEl = document.getElementById("includeString");
+    const micHelpEl = document.getElementById("micHelp");
+
+    let audioContext = null;
+    let analyser = null;
+    let microphone = null;
+    let microphoneStream = null;
+    let dataArray = null;
+    let animationId = null;
+    let intervalId = null;
+    let isRunning = false;
+    let isMicEnabled = false;
+    let currentQuestion = null;
+    let hasAnsweredCurrent = false;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let lastJudgedAt = 0;
+
+    speedRange.addEventListener("input", () => {
+      speedValue.textContent = speedRange.value;
+      if (isRunning) restartTimer();
+    });
+
+    [includeEnglishEl, includeKoreanEl, includeAccidentalsEl, includeStringEl].forEach((el) => {
+      el.addEventListener("change", () => {
+        if (!includeEnglishEl.checked && !includeKoreanEl.checked) {
+          includeEnglishEl.checked = true;
+          setStatus("영어 또는 한글 계이름 중 하나는 반드시 선택해야 합니다", "warn");
+        }
+        if (isRunning) nextQuestion();
+      });
+    });
+
+    startBtn.addEventListener("click", startQuestionsOnly);
+    nextBtn.addEventListener("click", nextQuestion);
+    micBtn.addEventListener("click", enableMicrophoneJudging);
+    stopBtn.addEventListener("click", stopTraining);
+    resetBtn.addEventListener("click", resetScore);
+    testBtn.addEventListener("click", runSelfTests);
+
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.classList.remove("correct", "wrong", "warn");
+      if (type) statusEl.classList.add(type);
+    }
+
+    function setMicHelp(message) {
+      micHelpEl.textContent = message;
+    }
+
+    function buildQuestionPool() {
+      const pool = [];
+      const includeEnglish = includeEnglishEl.checked;
+      const includeKorean = includeKoreanEl.checked;
+      const includeAccidentals = includeAccidentalsEl.checked;
+      const includeString = includeStringEl.checked;
+
+      NOTE_ALIASES.forEach((note) => {
+        note.labels.forEach((label) => {
+          const isKorean = /[가-힣]/.test(label);
+          const isEnglish = /[A-G]/.test(label);
+          const isAccidental = label.includes("#") || label.includes("♯") || label.includes("♭") || label.includes("b");
+
+          if (!includeAccidentals && isAccidental) return;
+          if (isEnglish && !includeEnglish) return;
+          if (isKorean && !includeKorean) return;
+
+          if (includeString) {
+            GUITAR_STRING_LABELS.forEach((stringLabel) => {
+              pool.push({
+                label,
+                canonical: note.canonical,
+                stringLabel
+              });
+            });
+            return;
+          }
+
+          pool.push({ label, canonical: note.canonical, stringLabel: null });
+        });
+      });
+
+      return pool;
+    }
+
+    function startQuestionsOnly() {
+      if (isRunning) return;
+
+      isRunning = true;
+      startBtn.disabled = true;
+      nextBtn.disabled = false;
+      stopBtn.disabled = false;
+      micBtn.disabled = false;
+      nextQuestion();
+      restartTimer();
+      setStatus("출제 중입니다. 마이크 판정이 필요하면 별도로 켜세요", "");
+    }
+
+    async function enableMicrophoneJudging() {
+      if (isMicEnabled) {
+        setStatus("이미 마이크 판정이 켜져 있습니다", "warn");
+        return;
+      }
+
+      if (!isRunning) {
+        startQuestionsOnly();
+      }
+
+      try {
+        await startMicrophone();
+        isMicEnabled = true;
+        micBtn.disabled = true;
+        detectedNoteEl.textContent = "대기";
+        frequencyEl.textContent = "-";
+        setMicHelp("마이크 판정이 켜졌습니다. 기타를 한 음씩 또렷하게 연주하세요.");
+        setStatus("마이크 판정 중입니다", "correct");
+        detectPitchLoop();
+      } catch (error) {
+        handleMicrophoneError(error);
+      }
+    }
+
+    async function startMicrophone() {
+      const mediaDevices = navigator.mediaDevices;
+      const getUserMedia = mediaDevices && mediaDevices.getUserMedia;
+      if (!getUserMedia) {
+        throw new Error("MIC_UNSUPPORTED");
+      }
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        throw new Error("AUDIO_CONTEXT_UNSUPPORTED");
+      }
+
+      microphoneStream = await getUserMedia.call(mediaDevices, {
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+
+      audioContext = new AudioContextClass();
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 4096;
+      analyser.smoothingTimeConstant = 0.15;
+
+      microphone = audioContext.createMediaStreamSource(microphoneStream);
+      microphone.connect(analyser);
+      dataArray = new Float32Array(analyser.fftSize);
+    }
+
+    function handleMicrophoneError(error) {
+      console.warn("Microphone unavailable:", error);
+      stopMicrophoneOnly();
+      detectedNoteEl.textContent = "마이크 꺼짐";
+      frequencyEl.textContent = "-";
+      micBtn.disabled = false;
+
+      const name = error && error.name ? error.name : "";
+      const message = error && error.message ? error.message : "";
+
+      if (name === "NotAllowedError" || name === "SecurityError" || message.includes("Permission denied")) {
+        setStatus("마이크 권한이 거부되었습니다. 출제 기능은 계속 실행됩니다", "warn");
+        setMicHelp("브라우저 주소창의 마이크 권한을 허용한 뒤 다시 누르세요. HTTPS 또는 localhost 환경이 아니면 차단될 수 있습니다.");
+        return;
+      }
+
+      if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setStatus("사용 가능한 마이크를 찾지 못했습니다", "warn");
+        setMicHelp("마이크 연결 상태와 브라우저 입력 장치를 확인하세요.");
+        return;
+      }
+
+      if (message === "MIC_UNSUPPORTED") {
+        setStatus("이 실행 환경에서는 마이크 API를 사용할 수 없습니다", "warn");
+        setMicHelp("Chrome, Edge 등 최신 브라우저에서 HTTPS 또는 localhost로 실행하세요.");
+        return;
+      }
+
+      if (message === "AUDIO_CONTEXT_UNSUPPORTED") {
+        setStatus("이 브라우저는 Web Audio API를 지원하지 않습니다", "warn");
+        setMicHelp("Chrome, Edge, Safari 최신 버전에서 다시 실행하세요.");
+        return;
+      }
+
+      setStatus("마이크 판정을 시작하지 못했습니다. 출제 기능은 계속 실행됩니다", "warn");
+      setMicHelp("권한, 브라우저, 실행 주소가 HTTPS 또는 localhost인지 확인하세요.");
+    }
+
+    function nextQuestion() {
+      const pool = buildQuestionPool();
+      if (pool.length === 0) {
+        setStatus("출제할 계이름이 없습니다", "wrong");
+        return;
+      }
+
+      const index = Math.floor(Math.random() * pool.length);
+      currentQuestion = pool[index];
+      hasAnsweredCurrent = false;
+      lastJudgedAt = 0;
+
+      stringLineEl.textContent = currentQuestion.stringLabel ? `${currentQuestion.stringLabel} 줄` : "";
+      currentNoteEl.textContent = currentQuestion.label;
+      const noteKind = currentQuestion.canonical.includes("#") ? "반음 포함" : "기본 음";
+      noteTypeEl.textContent = currentQuestion.stringLabel ? `줄 포함 · ${noteKind}` : noteKind;
+
+      if (isMicEnabled) {
+        setStatus("기타로 해당 음을 연주하세요", "");
+      }
+    }
+
+    function restartTimer() {
+      clearInterval(intervalId);
+      const seconds = Number(speedRange.value);
+      intervalId = setInterval(nextQuestion, seconds * 1000);
+    }
+
+    function stopTraining() {
+      isRunning = false;
+      clearInterval(intervalId);
+      cancelAnimationFrame(animationId);
+      stopMicrophoneOnly();
+
+      startBtn.disabled = false;
+      nextBtn.disabled = true;
+      stopBtn.disabled = true;
+      micBtn.disabled = false;
+      currentQuestion = null;
+      hasAnsweredCurrent = false;
+      stringLineEl.textContent = "";
+      currentNoteEl.textContent = "?";
+
+      setStatus("정지됨", "");
+      setMicHelp("마이크 판정은 HTTPS 또는 localhost 환경에서 가장 안정적으로 작동합니다. 권한을 거부해도 랜덤 출제 기능은 계속 사용할 수 있습니다.");
+    }
+
+    function stopMicrophoneOnly() {
+      isMicEnabled = false;
+      cancelAnimationFrame(animationId);
+      animationId = null;
+
+      if (microphone) {
+        try {
+          microphone.disconnect();
+        } catch (_) {}
+      }
+
+      if (microphoneStream) {
+        microphoneStream.getTracks().forEach((track) => track.stop());
+      }
+
+      if (audioContext) {
+        audioContext.close().catch(() => {});
+      }
+
+      audioContext = null;
+      analyser = null;
+      microphone = null;
+      microphoneStream = null;
+      dataArray = null;
+    }
+
+    function resetScore() {
+      correctCount = 0;
+      wrongCount = 0;
+      correctCountEl.textContent = "0";
+      wrongCountEl.textContent = "0";
+      setStatus("점수 초기화 완료", "");
+    }
+
+    function detectPitchLoop() {
+      if (!isRunning || !isMicEnabled || !analyser || !dataArray || !audioContext) return;
+
+      analyser.getFloatTimeDomainData(dataArray);
+      const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
+
+      if (frequency !== -1) {
+        const detected = frequencyToNoteName(frequency);
+        detectedNoteEl.textContent = detected.note;
+        frequencyEl.textContent = `${frequency.toFixed(1)}Hz`;
+        checkAnswer(detected.note);
+      }
+
+      animationId = requestAnimationFrame(detectPitchLoop);
+    }
+
+    function checkAnswer(detectedNote) {
+      if (!currentQuestion || hasAnsweredCurrent) return;
+
+      const now = Date.now();
+      if (now - lastJudgedAt < 450) return;
+      lastJudgedAt = now;
+
+      const detectedCanonical = normalizeToCanonical(detectedNote);
+      const targetCanonical = currentQuestion.canonical;
+
+      hasAnsweredCurrent = true;
+
+      if (detectedCanonical === targetCanonical) {
+        correctCount += 1;
+        correctCountEl.textContent = String(correctCount);
+        setStatus(`정답! 감지: ${detectedNote}`, "correct");
+      } else {
+        wrongCount += 1;
+        wrongCountEl.textContent = String(wrongCount);
+        setStatus(`오답. 감지: ${detectedNote}`, "wrong");
+      }
+    }
+
+    function normalizeToCanonical(note) {
+      const clean = String(note)
+        .replace(/[0-9]/g, "")
+        .replace("♯", "#")
+        .replace("♭", "b");
+
+      const flatToSharp = {
+        Db: "C#",
+        Eb: "D#",
+        Gb: "F#",
+        Ab: "G#",
+        Bb: "A#"
+      };
+
+      return flatToSharp[clean] || clean;
+    }
+
+    function frequencyToNoteName(frequency) {
+      const midi = Math.round(12 * Math.log2(frequency / 440) + 69);
+      const noteIndex = ((midi % 12) + 12) % 12;
+      const octave = Math.floor(midi / 12) - 1;
+      return {
+        note: NOTE_NAMES_SHARP[noteIndex] + octave,
+        midi
+      };
+    }
+
+    function autoCorrelate(inputBuffer, sampleRate) {
+      let rms = 0;
+      for (let i = 0; i < inputBuffer.length; i += 1) {
+        rms += inputBuffer[i] * inputBuffer[i];
+      }
+      rms = Math.sqrt(rms / inputBuffer.length);
+      if (rms < 0.015) return -1;
+
+      let start = 0;
+      let end = inputBuffer.length - 1;
+      const trimThreshold = 0.2;
+
+      for (let i = 0; i < inputBuffer.length / 2; i += 1) {
+        if (Math.abs(inputBuffer[i]) < trimThreshold) {
+          start = i;
+          break;
+        }
+      }
+
+      for (let i = 1; i < inputBuffer.length / 2; i += 1) {
+        if (Math.abs(inputBuffer[inputBuffer.length - i]) < trimThreshold) {
+          end = inputBuffer.length - i;
+          break;
+        }
+      }
+
+      const buffer = inputBuffer.slice(start, end);
+      const size = buffer.length;
+      if (size < 32) return -1;
+
+      const correlations = new Array(size).fill(0);
+      for (let lag = 0; lag < size; lag += 1) {
+        for (let i = 0; i < size - lag; i += 1) {
+          correlations[lag] += buffer[i] * buffer[i + lag];
+        }
+      }
+
+      let offset = 0;
+      while (offset + 1 < correlations.length && correlations[offset] > correlations[offset + 1]) {
+        offset += 1;
+      }
+
+      let maxValue = -1;
+      let maxPosition = -1;
+      for (let i = offset; i < size; i += 1) {
+        if (correlations[i] > maxValue) {
+          maxValue = correlations[i];
+          maxPosition = i;
+        }
+      }
+
+      if (maxPosition <= 0) return -1;
+
+      const x1 = correlations[maxPosition - 1] || 0;
+      const x2 = correlations[maxPosition] || 0;
+      const x3 = correlations[maxPosition + 1] || 0;
+      const denominator = 2 * (2 * x2 - x1 - x3);
+      const correction = denominator === 0 ? 0 : (x3 - x1) / denominator;
+      const period = maxPosition + correction;
+
+      if (!Number.isFinite(period) || period <= 0) return -1;
+
+      const frequency = sampleRate / period;
+      if (frequency < 70 || frequency > 1200) return -1;
+
+      return frequency;
+    }
+
+    function assertEqual(actual, expected, message) {
+      if (actual !== expected) {
+        throw new Error(`${message} | expected: ${expected}, actual: ${actual}`);
+      }
+    }
+
+    function assertTrue(value, message) {
+      if (!value) {
+        throw new Error(message);
+      }
+    }
+
+    function runSelfTests() {
+      try {
+        assertEqual(normalizeToCanonical("C4"), "C", "C4는 C로 정규화되어야 함");
+        assertEqual(normalizeToCanonical("Db3"), "C#", "Db3는 C#로 정규화되어야 함");
+        assertEqual(normalizeToCanonical("D♭3"), "C#", "D♭3는 C#로 정규화되어야 함");
+        assertEqual(normalizeToCanonical("Bb2"), "A#", "Bb2는 A#로 정규화되어야 함");
+        assertEqual(frequencyToNoteName(440).note, "A4", "440Hz는 A4여야 함");
+        assertEqual(frequencyToNoteName(261.63).note, "C4", "261.63Hz는 C4에 가까워야 함");
+        assertTrue(buildQuestionPool().length > 0, "출제 풀은 비어 있으면 안 됨");
+
+        const previousStringSetting = includeStringEl.checked;
+        includeStringEl.checked = true;
+        const stringPool = buildQuestionPool();
+        assertTrue(stringPool.some((item) => item.stringLabel === "6번"), "줄 포함 선택 시 6번 줄 문제가 있어야 함");
+        assertTrue(stringPool.some((item) => item.stringLabel === "5번"), "줄 포함 선택 시 5번 줄 문제가 있어야 함");
+        assertTrue(stringPool.some((item) => item.stringLabel === "4번"), "줄 포함 선택 시 4번 줄 문제가 있어야 함");
+        assertTrue(stringPool.every((item) => !item.label.startsWith("6번 ") && !item.label.startsWith("5번 ") && !item.label.startsWith("4번 ")), "줄 번호는 계이름 라벨에 직접 붙으면 안 됨");
+        assertTrue(stringPool.every((item) => ["6번", "5번", "4번"].includes(item.stringLabel)), "줄 포함 문제는 6번, 5번, 4번 중 하나여야 함");
+        includeStringEl.checked = previousStringSetting;
+
+        setStatus("테스트 통과", "correct");
+        console.info("All self tests passed.");
+      } catch (error) {
+        console.error(error);
+        setStatus(`테스트 실패: ${error.message}`, "wrong");
+      }
+    }
+
+    nextBtn.disabled = true;
+    stopBtn.disabled = true;
+  </script>
+</body>
+</html>
