@@ -451,6 +451,7 @@
       <p>3. 마이크 권한이 거부되거나 미리보기 환경에서 차단되어도 출제 기능은 계속 작동합니다.</p>
       <p>4. 같은 음 이름은 옥타브와 관계없이 같은 정답으로 처리합니다. 예: C2, C3, C4는 모두 C로 인정됩니다.</p>
       <p>5. 감지된 반음은 샾 표기와 플랫 표기를 함께 보여줍니다. 예: C# / 도# / D♭ / 레♭</p>
+      <p>6. 판정은 순간값이 아니라 같은 음이 짧은 시간 동안 안정적으로 유지될 때만 처리됩니다.</p>
     </section>
   </main>
 
@@ -476,102 +477,18 @@
     const GUITAR_STRING_LABELS = ["6번", "5번", "4번"];
 
     const NOTE_DISPLAY_MAP = {
-      C: {
-        english: "C",
-        korean: "도",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      "C#": {
-        english: "C#",
-        korean: "도#",
-        sharpEnglish: "C#",
-        sharpKorean: "도#",
-        flatEnglish: "D♭",
-        flatKorean: "레♭"
-      },
-      D: {
-        english: "D",
-        korean: "레",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      "D#": {
-        english: "D#",
-        korean: "레#",
-        sharpEnglish: "D#",
-        sharpKorean: "레#",
-        flatEnglish: "E♭",
-        flatKorean: "미♭"
-      },
-      E: {
-        english: "E",
-        korean: "미",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      F: {
-        english: "F",
-        korean: "파",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      "F#": {
-        english: "F#",
-        korean: "파#",
-        sharpEnglish: "F#",
-        sharpKorean: "파#",
-        flatEnglish: "G♭",
-        flatKorean: "솔♭"
-      },
-      G: {
-        english: "G",
-        korean: "솔",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      "G#": {
-        english: "G#",
-        korean: "솔#",
-        sharpEnglish: "G#",
-        sharpKorean: "솔#",
-        flatEnglish: "A♭",
-        flatKorean: "라♭"
-      },
-      A: {
-        english: "A",
-        korean: "라",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      },
-      "A#": {
-        english: "A#",
-        korean: "라#",
-        sharpEnglish: "A#",
-        sharpKorean: "라#",
-        flatEnglish: "B♭",
-        flatKorean: "시♭"
-      },
-      B: {
-        english: "B",
-        korean: "시",
-        sharpEnglish: null,
-        sharpKorean: null,
-        flatEnglish: null,
-        flatKorean: null
-      }
+      C: { english: "C", korean: "도", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      "C#": { english: "C#", korean: "도#", sharpEnglish: "C#", sharpKorean: "도#", flatEnglish: "D♭", flatKorean: "레♭" },
+      D: { english: "D", korean: "레", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      "D#": { english: "D#", korean: "레#", sharpEnglish: "D#", sharpKorean: "레#", flatEnglish: "E♭", flatKorean: "미♭" },
+      E: { english: "E", korean: "미", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      F: { english: "F", korean: "파", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      "F#": { english: "F#", korean: "파#", sharpEnglish: "F#", sharpKorean: "파#", flatEnglish: "G♭", flatKorean: "솔♭" },
+      G: { english: "G", korean: "솔", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      "G#": { english: "G#", korean: "솔#", sharpEnglish: "G#", sharpKorean: "솔#", flatEnglish: "A♭", flatKorean: "라♭" },
+      A: { english: "A", korean: "라", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null },
+      "A#": { english: "A#", korean: "라#", sharpEnglish: "A#", sharpKorean: "라#", flatEnglish: "B♭", flatKorean: "시♭" },
+      B: { english: "B", korean: "시", sharpEnglish: null, sharpKorean: null, flatEnglish: null, flatKorean: null }
     };
 
     const currentNoteEl = document.getElementById("currentNote");
@@ -609,6 +526,16 @@
     let hasAnsweredCurrent = false;
     let correctCount = 0;
     let wrongCount = 0;
+
+    let stableNote = null;
+    let stableFrequency = null;
+    let stableStartedAt = 0;
+    let lastDetectedCanonical = null;
+    let lastDetectionShownAt = 0;
+
+    const STABLE_NOTE_REQUIRED_MS = 260;
+    const MIN_JUDGE_INTERVAL_MS = 650;
+    const CENT_TOLERANCE_FOR_DISPLAY = 55;
     let lastJudgedAt = 0;
 
     speedRange.addEventListener("input", () => {
@@ -689,7 +616,7 @@
 
     function getDetectedMainLabel(canonicalNote) {
       const display = NOTE_DISPLAY_MAP[canonicalNote];
-      return display ? display.english : canonicalNote;
+      return display ? `${display.english} / ${display.korean}` : canonicalNote;
     }
 
     function buildQuestionPool() {
@@ -703,7 +630,7 @@
         note.labels.forEach((label) => {
           const isKorean = /[가-힣]/.test(label);
           const isEnglish = /[A-G]/.test(label);
-          const isAccidental = label.includes("#") || label.includes("♯") || label.includes("♭") || label.includes("b");
+          const isAccidental = label.includes("#") || label.includes("♯") || label.includes("♭") || /[A-G]b$/.test(label) || /[가-힣]b$/.test(label);
 
           if (!includeAccidentals && isAccidental) return;
           if (isEnglish && !includeEnglish) return;
@@ -711,20 +638,12 @@
 
           if (includeString) {
             GUITAR_STRING_LABELS.forEach((stringLabel) => {
-              pool.push({
-                label,
-                canonical: note.canonical,
-                stringLabel
-              });
+              pool.push({ label, canonical: note.canonical, stringLabel });
             });
             return;
           }
 
-          pool.push({
-            label,
-            canonical: note.canonical,
-            stringLabel: null
-          });
+          pool.push({ label, canonical: note.canonical, stringLabel: null });
         });
       });
 
@@ -761,6 +680,7 @@
         micBtn.disabled = true;
         renderDetectedPlaceholder("대기");
         frequencyEl.textContent = "-";
+        resetStableDetection();
         setMicHelp("마이크 판정이 켜졌습니다. 기타를 한 음씩 또렷하게 연주하세요.");
         setStatus("마이크 판정 중입니다", "correct");
         detectPitchLoop();
@@ -799,7 +719,7 @@
 
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.15;
+      analyser.smoothingTimeConstant = 0.08;
 
       microphone = audioContext.createMediaStreamSource(microphoneStream);
       microphone.connect(analyser);
@@ -856,6 +776,7 @@
       currentQuestion = pool[index];
       hasAnsweredCurrent = false;
       lastJudgedAt = 0;
+      resetStableDetection();
 
       stringLineEl.textContent = currentQuestion.stringLabel ? `${currentQuestion.stringLabel} 줄` : "";
       currentNoteEl.textContent = currentQuestion.label;
@@ -886,6 +807,7 @@
       micBtn.disabled = false;
       currentQuestion = null;
       hasAnsweredCurrent = false;
+      resetStableDetection();
 
       stringLineEl.textContent = "";
       currentNoteEl.textContent = "?";
@@ -930,77 +852,138 @@
       setStatus("점수 초기화 완료", "");
     }
 
+    function resetStableDetection() {
+      stableNote = null;
+      stableFrequency = null;
+      stableStartedAt = 0;
+      lastDetectedCanonical = null;
+      lastDetectionShownAt = 0;
+    }
+
     function detectPitchLoop() {
       if (!isRunning || !isMicEnabled || !analyser || !dataArray || !audioContext) return;
 
       analyser.getFloatTimeDomainData(dataArray);
-      const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
+      const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+      const now = Date.now();
 
-      if (frequency !== -1) {
-        const detected = frequencyToNoteName(frequency);
-        renderDetectedNote(detected.canonical);
-        frequencyEl.textContent = `${frequency.toFixed(1)}Hz`;
-        checkAnswer(detected.canonical);
+      if (pitch && pitch.frequency !== -1) {
+        const detected = frequencyToNoteName(pitch.frequency);
+        updateStableDetection(detected, pitch.frequency, now);
+      } else if (now - lastDetectionShownAt > 500 && !hasAnsweredCurrent) {
+        resetStableDetection();
+        renderDetectedPlaceholder("대기");
+        frequencyEl.textContent = "-";
       }
 
       animationId = requestAnimationFrame(detectPitchLoop);
     }
 
-    function checkAnswer(detectedNote) {
+    function updateStableDetection(detected, frequency, now) {
+      const detectedCanonical = normalizeToCanonical(detected.canonical);
+      const cents = centsOffFromMidi(frequency, detected.midi);
+
+      if (Math.abs(cents) > CENT_TOLERANCE_FOR_DISPLAY) {
+        return;
+      }
+
+      renderDetectedNote(detectedCanonical);
+      frequencyEl.textContent = `${frequency.toFixed(1)}Hz`;
+      lastDetectionShownAt = now;
+
+      if (detectedCanonical !== lastDetectedCanonical) {
+        lastDetectedCanonical = detectedCanonical;
+        stableNote = detectedCanonical;
+        stableFrequency = frequency;
+        stableStartedAt = now;
+        return;
+      }
+
+      stableNote = detectedCanonical;
+      stableFrequency = frequency;
+
+      if (now - stableStartedAt >= STABLE_NOTE_REQUIRED_MS) {
+        checkAnswer(stableNote, stableFrequency, now);
+      }
+    }
+
+    function checkAnswer(detectedNote, judgedFrequency, now = Date.now()) {
       if (!currentQuestion || hasAnsweredCurrent) return;
-
-      const now = Date.now();
-
-      if (now - lastJudgedAt < 450) return;
+      if (now - lastJudgedAt < MIN_JUDGE_INTERVAL_MS) return;
 
       lastJudgedAt = now;
 
       const detectedCanonical = normalizeToCanonical(detectedNote);
       const targetCanonical = currentQuestion.canonical;
       const detectedLabel = getDetectedMainLabel(detectedCanonical);
+      const frequencyText = Number.isFinite(judgedFrequency) ? ` · ${judgedFrequency.toFixed(1)}Hz` : "";
 
       hasAnsweredCurrent = true;
+      renderDetectedNote(detectedCanonical);
+      if (Number.isFinite(judgedFrequency)) {
+        frequencyEl.textContent = `${judgedFrequency.toFixed(1)}Hz`;
+      }
 
       if (detectedCanonical === targetCanonical) {
         correctCount += 1;
         correctCountEl.textContent = String(correctCount);
-        setStatus(`정답! 감지: ${detectedLabel}`, "correct");
+        setStatus(`정답! 감지: ${detectedLabel}${frequencyText}`, "correct");
       } else {
         wrongCount += 1;
         wrongCountEl.textContent = String(wrongCount);
-        setStatus(`오답. 감지: ${detectedLabel}`, "wrong");
+        setStatus(`오답. 감지: ${detectedLabel}${frequencyText}`, "wrong");
       }
     }
 
     function normalizeToCanonical(note) {
       const clean = String(note)
+        .trim()
         .replace(/[0-9]/g, "")
-        .replace("♯", "#")
-        .replace("♭", "b");
+        .replaceAll("♯", "#")
+        .replaceAll("♭", "b");
 
       const flatToSharp = {
         Db: "C#",
         Eb: "D#",
         Gb: "F#",
         Ab: "G#",
-        Bb: "A#"
+        Bb: "A#",
+        "레b": "C#",
+        "미b": "D#",
+        "솔b": "F#",
+        "라b": "G#",
+        "시b": "A#",
+        도: "C",
+        "도#": "C#",
+        레: "D",
+        "레#": "D#",
+        미: "E",
+        파: "F",
+        "파#": "F#",
+        솔: "G",
+        "솔#": "G#",
+        라: "A",
+        "라#": "A#",
+        시: "B"
       };
 
       return flatToSharp[clean] || clean;
     }
 
     function frequencyToNoteName(frequency) {
-      const midi = Math.round(12 * Math.log2(frequency / 440) + 69);
+      const midiFloat = 12 * Math.log2(frequency / 440) + 69;
+      const midi = Math.round(midiFloat);
       const noteIndex = ((midi % 12) + 12) % 12;
       const octave = Math.floor(midi / 12) - 1;
       const canonical = NOTE_NAMES_SHARP[noteIndex];
+      const cents = (midiFloat - midi) * 100;
 
-      return {
-        note: canonical + octave,
-        canonical,
-        octave,
-        midi
-      };
+      return { note: canonical + octave, canonical, octave, midi, cents };
+    }
+
+    function centsOffFromMidi(frequency, midi) {
+      const idealFrequency = 440 * Math.pow(2, (midi - 69) / 12);
+      return 1200 * Math.log2(frequency / idealFrequency);
     }
 
     function autoCorrelate(inputBuffer, sampleRate) {
@@ -1011,72 +994,78 @@
       }
 
       rms = Math.sqrt(rms / inputBuffer.length);
+      if (rms < 0.012) return { frequency: -1, clarity: 0 };
 
-      if (rms < 0.015) return -1;
-
-      let start = 0;
-      let end = inputBuffer.length - 1;
-      const trimThreshold = 0.2;
-
-      for (let i = 0; i < inputBuffer.length / 2; i += 1) {
-        if (Math.abs(inputBuffer[i]) < trimThreshold) {
-          start = i;
-          break;
-        }
-      }
-
-      for (let i = 1; i < inputBuffer.length / 2; i += 1) {
-        if (Math.abs(inputBuffer[inputBuffer.length - i]) < trimThreshold) {
-          end = inputBuffer.length - i;
-          break;
-        }
-      }
-
-      const buffer = inputBuffer.slice(start, end);
+      const buffer = inputBuffer;
       const size = buffer.length;
+      const minFrequency = 70;
+      const maxFrequency = 1200;
+      const minLag = Math.floor(sampleRate / maxFrequency);
+      const maxLag = Math.min(Math.floor(sampleRate / minFrequency), size - 2);
 
-      if (size < 32) return -1;
+      let bestLag = -1;
+      let bestCorrelation = 0;
 
-      const correlations = new Array(size).fill(0);
+      for (let lag = minLag; lag <= maxLag; lag += 1) {
+        let sum = 0;
+        let sumA = 0;
+        let sumB = 0;
 
-      for (let lag = 0; lag < size; lag += 1) {
         for (let i = 0; i < size - lag; i += 1) {
-          correlations[lag] += buffer[i] * buffer[i + lag];
+          const a = buffer[i];
+          const b = buffer[i + lag];
+          sum += a * b;
+          sumA += a * a;
+          sumB += b * b;
+        }
+
+        const denominator = Math.sqrt(sumA * sumB);
+        const correlation = denominator > 0 ? sum / denominator : 0;
+
+        if (correlation > bestCorrelation) {
+          bestCorrelation = correlation;
+          bestLag = lag;
         }
       }
 
-      let offset = 0;
-
-      while (offset + 1 < correlations.length && correlations[offset] > correlations[offset + 1]) {
-        offset += 1;
+      if (bestLag <= 0 || bestCorrelation < 0.62) {
+        return { frequency: -1, clarity: bestCorrelation };
       }
 
-      let maxValue = -1;
-      let maxPosition = -1;
-
-      for (let i = offset; i < size; i += 1) {
-        if (correlations[i] > maxValue) {
-          maxValue = correlations[i];
-          maxPosition = i;
+      let refinedLag = bestLag;
+      if (bestLag > minLag && bestLag < maxLag) {
+        const c1 = normalizedCorrelationAtLag(buffer, bestLag - 1);
+        const c2 = normalizedCorrelationAtLag(buffer, bestLag);
+        const c3 = normalizedCorrelationAtLag(buffer, bestLag + 1);
+        const denominator = c1 - 2 * c2 + c3;
+        if (denominator !== 0) {
+          refinedLag = bestLag + 0.5 * (c1 - c3) / denominator;
         }
       }
 
-      if (maxPosition <= 0) return -1;
+      const frequency = sampleRate / refinedLag;
+      if (!Number.isFinite(frequency) || frequency < minFrequency || frequency > maxFrequency) {
+        return { frequency: -1, clarity: bestCorrelation };
+      }
 
-      const x1 = correlations[maxPosition - 1] || 0;
-      const x2 = correlations[maxPosition] || 0;
-      const x3 = correlations[maxPosition + 1] || 0;
-      const denominator = 2 * (2 * x2 - x1 - x3);
-      const correction = denominator === 0 ? 0 : (x3 - x1) / denominator;
-      const period = maxPosition + correction;
+      return { frequency, clarity: bestCorrelation };
+    }
 
-      if (!Number.isFinite(period) || period <= 0) return -1;
+    function normalizedCorrelationAtLag(buffer, lag) {
+      let sum = 0;
+      let sumA = 0;
+      let sumB = 0;
 
-      const frequency = sampleRate / period;
+      for (let i = 0; i < buffer.length - lag; i += 1) {
+        const a = buffer[i];
+        const b = buffer[i + lag];
+        sum += a * b;
+        sumA += a * a;
+        sumB += b * b;
+      }
 
-      if (frequency < 70 || frequency > 1200) return -1;
-
-      return frequency;
+      const denominator = Math.sqrt(sumA * sumB);
+      return denominator > 0 ? sum / denominator : 0;
     }
 
     function assertEqual(actual, expected, message) {
@@ -1097,11 +1086,15 @@
         assertEqual(normalizeToCanonical("Db3"), "C#", "Db3는 C#로 정규화되어야 함");
         assertEqual(normalizeToCanonical("D♭3"), "C#", "D♭3는 C#로 정규화되어야 함");
         assertEqual(normalizeToCanonical("Bb2"), "A#", "Bb2는 A#로 정규화되어야 함");
+        assertEqual(normalizeToCanonical("레♭"), "C#", "레♭는 C#로 정규화되어야 함");
+        assertEqual(normalizeToCanonical("시♭"), "A#", "시♭는 A#로 정규화되어야 함");
 
         assertEqual(frequencyToNoteName(440).note, "A4", "440Hz는 A4여야 함");
         assertEqual(frequencyToNoteName(440).canonical, "A", "440Hz의 canonical은 A여야 함");
         assertEqual(frequencyToNoteName(261.63).note, "C4", "261.63Hz는 C4에 가까워야 함");
         assertEqual(frequencyToNoteName(261.63).canonical, "C", "261.63Hz의 canonical은 C여야 함");
+
+        assertTrue(Math.abs(centsOffFromMidi(440, 69)) < 0.01, "440Hz와 A4의 cent 차이는 거의 0이어야 함");
 
         assertEqual(NOTE_DISPLAY_MAP.C.english, "C", "C의 영어 표기는 C여야 함");
         assertEqual(NOTE_DISPLAY_MAP.C.korean, "도", "C의 한글 표기는 도여야 함");
